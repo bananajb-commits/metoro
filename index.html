@@ -1,0 +1,2740 @@
+<html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Metronome Multi Clicker Ω - 極限増殖フィーバー＆天界交響曲</title>
+  <style>
+    :root {
+      --bg: #090910;
+      --gold: #ffb300;
+      --gold-light: #fff9c4;
+      --fever: #ff0055;
+      --cyan: #00e5ff;
+      --green: #00e676;
+      --purple: #d500f9;
+      --panel-bg: rgba(15, 15, 24, 0.95);
+      --border-color: #2b2b40;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      height: 100vh;
+      display: flex;
+      background: var(--bg);
+      color: #eee;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Meiryo, sans-serif;
+    }
+
+    .game-wrapper {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* 左側：メトロノーム大合奏ステージ */
+    .stage-area {
+      flex: 1.25;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      position: relative;
+      background: radial-gradient(circle at 50% 50%, #151528 0%, #05050a 100%);
+      overflow: hidden;
+      border-right: 2px solid var(--border-color);
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      z-index: 30;
+      gap: 8px;
+    }
+
+    .money-container {
+      background: rgba(20, 20, 32, 0.92);
+      border: 1.5px solid #3c3c5c;
+      border-radius: 12px;
+      padding: 6px 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+    }
+
+    .money-text {
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 0 14px rgba(255, 179, 0, 0.45);
+      white-space: nowrap;
+      transition: transform 0.05s;
+    }
+    .money-text.bump { transform: scale(1.06); color: #fff; }
+
+    .sub-stats {
+      font-size: 0.76rem;
+      font-weight: bold;
+      color: var(--cyan);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 3px;
+    }
+    .sub-stats span { white-space: nowrap; }
+
+    .top-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .act-btn {
+      padding: 6px 11px;
+      font-size: 0.74rem;
+      font-weight: 900;
+      border-radius: 8px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.15s ease;
+      border: 1.5px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #boostBtn {
+      background: linear-gradient(135deg, #ff0055, #ff9900);
+      color: #fff;
+      border-color: #ff9900;
+      box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
+    }
+    #boostBtn:disabled {
+      background: #20202c; color: #666; border-color: #333; cursor: not-allowed; box-shadow: none; opacity: 0.45;
+    }
+    #boostBtn.active {
+      background: linear-gradient(135deg, #00ffcc, #ff00ff);
+      box-shadow: 0 0 25px #00ffcc;
+      animation: pulseBtn 0.35s infinite alternate;
+    }
+
+    #autoBtn {
+      background: #1c1c28; color: #8888aa; border-color: #35354a;
+    }
+    #autoBtn.unlocked {
+      color: #fff; border-color: #4a4a70;
+    }
+    #autoBtn.active {
+      background: linear-gradient(135deg, #00e676, #00b0ff); color: #000; border-color: #fff;
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.8);
+    }
+
+    #ascendHeaderBtn {
+      background: linear-gradient(135deg, #7c4dff, #00b0ff);
+      color: #fff;
+      border-color: #80d8ff;
+      display: none;
+      animation: glowPurple 1.5s infinite alternate;
+    }
+
+    #muteBtn {
+      background: #1e1e2c;
+      color: #bbb;
+      border-color: #333;
+      padding: 6px 9px;
+    }
+
+    @keyframes pulseBtn { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+    @keyframes glowPurple { 0% { box-shadow: 0 0 8px #7c4dff; } 100% { box-shadow: 0 0 20px #00b0ff; } }
+
+    /* メトロノームグリッド */
+    .metro-grid-wrapper {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .metro-grid {
+      display: grid;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      max-width: 100%;
+      max-height: 68vh;
+      transition: all 0.3s ease;
+    }
+
+    .metro-grid.count-1 { grid-template-columns: 1fr; transform: scale(1.1); }
+    .metro-grid.count-2 { grid-template-columns: repeat(2, 1fr); transform: scale(0.95); gap: 16px; }
+    .metro-grid.count-3, .metro-grid.count-4 { grid-template-columns: repeat(2, 1fr); transform: scale(0.8); gap: 10px; }
+    .metro-grid.count-5, .metro-grid.count-6 { grid-template-columns: repeat(3, 1fr); transform: scale(0.68); gap: 8px; }
+    .metro-grid.count-7, .metro-grid.count-8 { grid-template-columns: repeat(4, 1fr); transform: scale(0.58); gap: 6px; }
+    .metro-grid.count-9, .metro-grid.count-10, .metro-grid.count-11, .metro-grid.count-12 { grid-template-columns: repeat(4, 1fr); transform: scale(0.48); gap: 5px; }
+    .metro-grid.count-13, .metro-grid.count-14, .metro-grid.count-15, .metro-grid.count-16 { grid-template-columns: repeat(4, 1fr); transform: scale(0.40); gap: 4px; }
+    .metro-grid.count-17, .metro-grid.count-18, .metro-grid.count-19, .metro-grid.count-20 { grid-template-columns: repeat(5, 1fr); transform: scale(0.35); gap: 3px; }
+
+    .metronome-unit {
+      position: relative;
+      width: 150px;
+      height: 220px;
+      display: flex;
+      justify-content: center;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,0.85));
+      pointer-events: none;
+    }
+
+    .case {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #3e2723, #150a07);
+      clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+      border-radius: 6px;
+      border-top: 3px solid #6d4c41;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+    }
+
+    .scale-plate {
+      position: absolute;
+      top: 28px;
+      width: 60px;
+      height: 115px;
+      background: rgba(255, 248, 225, 0.04);
+      border-left: 1px dashed rgba(255, 215, 0, 0.35);
+      border-right: 1px dashed rgba(255, 215, 0, 0.35);
+      position: relative;
+    }
+
+    .target-zone {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      opacity: 0.15;
+      transition: opacity 0.1s, background 0.1s;
+    }
+    .target-left { left: -5px; border-left: 3px solid #00e5ff; }
+    .target-right { right: -5px; border-right: 3px solid #00e5ff; }
+    .target-zone.active { opacity: 0.9; background: rgba(0, 229, 255, 0.25); }
+
+    .rod {
+      position: absolute;
+      bottom: 20px;
+      width: 5px;
+      height: 180px;
+      background: linear-gradient(90deg, #eceff1, #b0bec5);
+      transform-origin: bottom center;
+      transform: rotate(-22deg);
+      transition: transform 2s ease-in-out;
+      z-index: 10;
+      border-radius: 3px;
+    }
+
+    .rod.right { transform: rotate(22deg); }
+
+    .weight {
+      position: absolute;
+      top: 40px;
+      left: -11px;
+      width: 27px;
+      height: 22px;
+      background: linear-gradient(135deg, #ffd54f, #ff8f00);
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+
+    .pivot {
+      position: absolute;
+      bottom: 12px;
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle, #ffe082, #ff8f00);
+      border-radius: 50%;
+      z-index: 12;
+    }
+
+    /* 材質スタイル */
+    .mat-0 .rod { background: linear-gradient(90deg, #d7ccc8, #a1887f); }
+    .mat-1 .rod { background: linear-gradient(90deg, #ffe082, #ffb300); box-shadow: 0 0 6px #ffb300; }
+    .mat-1 .weight { background: linear-gradient(135deg, #fff176, #f57f17); }
+    .mat-2 .rod { background: linear-gradient(90deg, #cfd8dc, #78909c); box-shadow: 0 0 8px #90a4ae; }
+    .mat-3 .rod { background: linear-gradient(90deg, #80deea, #00acc1); box-shadow: 0 0 10px #00e5ff; }
+    .mat-4 .rod { background: linear-gradient(90deg, #a5d6a7, #2e7d32); box-shadow: 0 0 12px #00e676; }
+    .mat-5 .rod { background: linear-gradient(90deg, #e0f7fa, #4dd0e1); box-shadow: 0 0 16px #e0f7fa; }
+    .mat-6 .rod { background: linear-gradient(90deg, #f48fb1, #ad1457); box-shadow: 0 0 18px #ff4081; }
+    .mat-7 .rod { background: linear-gradient(90deg, #ff8a80, #c62828); box-shadow: 0 0 22px #ff1744; }
+    .mat-8 .rod { background: linear-gradient(90deg, #b388ff, #4527a0); box-shadow: 0 0 26px #7c4dff; }
+    .mat-9 .rod {
+      background: linear-gradient(90deg, #ff1744, #ffea00, #00e5ff, #d500f9);
+      box-shadow: 0 0 30px #00e5ff;
+      animation: rainbowGlow 2s infinite alternate;
+    }
+    @keyframes rainbowGlow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+
+    .timing-badge {
+      font-size: 1.25rem;
+      font-weight: 900;
+      min-height: 30px;
+      margin-top: 6px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .combo-pill {
+      background: linear-gradient(135deg, #ff007f, #ff9900);
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      box-shadow: 0 0 10px rgba(255,0,127,0.5);
+      animation: popText 0.2s;
+    }
+    @keyframes popText { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+    .spring-container {
+      position: absolute;
+      bottom: 12px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(18, 18, 28, 0.88);
+      border: 1px solid #444;
+      padding: 5px 12px;
+      border-radius: 10px;
+      z-index: 25;
+    }
+
+    .spring-winder-btn {
+      background: linear-gradient(135deg, #ffd700, #ff8f00);
+      color: #000;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+      transition: transform 0.1s;
+    }
+    .spring-winder-btn:active { transform: rotate(45deg) scale(0.92); }
+
+    .spring-gauge {
+      width: 85px;
+      height: 10px;
+      background: #111;
+      border-radius: 5px;
+      border: 1px solid #555;
+      overflow: hidden;
+    }
+
+    .spring-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00e5ff, #00e676);
+      transition: width 0.1s linear;
+    }
+
+    .golden-metro {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fffde7, #ffd700 65%, #ff8f00);
+      box-shadow: 0 0 25px #ffd700;
+      cursor: pointer;
+      z-index: 60;
+      display: none;
+      animation: floatG 2.5s infinite alternate;
+    }
+    .golden-metro::after {
+      content: "✦";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #5d4037;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    @keyframes floatG { 0% { transform: translateY(0); } 100% { transform: translateY(-16px) scale(1.1); } }
+
+    /* 右側：ショップパネル */
+    .shop-area {
+      width: 460px;
+      max-width: 50vw;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      z-index: 30;
+      box-shadow: -5px 0 25px rgba(0,0,0,0.7);
+    }
+
+    .tab-nav {
+      display: flex;
+      background: #10101a;
+      border-bottom: 2px solid var(--border-color);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+
+    .tab-item {
+      flex: 1;
+      min-width: 68px;
+      padding: 10px 4px;
+      background: none;
+      border: none;
+      color: #8888aa;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .tab-item.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom-color: var(--cyan);
+    }
+
+    .tab-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: none;
+    }
+    .tab-pane.active { display: block; }
+
+    .shop-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .shop-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #161624;
+      border: 1.5px solid #28283d;
+      border-radius: 8px;
+      padding: 8px 11px;
+      cursor: pointer;
+      transition: all 0.12s;
+      text-align: left;
+      color: #eee;
+    }
+
+    .shop-card:hover:not(:disabled) {
+      background: #202033;
+      border-color: #555577;
+      transform: translateX(-2px);
+    }
+
+    .shop-card:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      filter: grayscale(0.85);
+    }
+
+    .shop-card-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .shop-icon { font-size: 1.6rem; width: 34px; text-align: center; flex-shrink: 0; }
+
+    .shop-details { display: flex; flex-direction: column; overflow: hidden; }
+    .shop-name { font-size: 0.82rem; font-weight: 900; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .shop-cost { font-size: 0.74rem; font-weight: bold; color: var(--gold); }
+    .shop-effect { font-size: 0.66rem; color: #8899bb; line-height: 1.3; }
+    .shop-level { font-size: 1.15rem; font-weight: 900; color: #555577; margin-left: 8px; flex-shrink: 0; }
+
+    .dragon-container {
+      text-align: center;
+      padding: 12px 8px;
+    }
+    .dragon-avatar {
+      font-size: 4rem;
+      margin: 8px 0;
+      filter: drop-shadow(0 0 15px rgba(213,0,249,0.5));
+      animation: floatDragon 3s infinite ease-in-out alternate;
+    }
+    @keyframes floatDragon { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+
+    .achieve-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+    }
+    .achieve-card {
+      background: #151522;
+      border: 1px solid #262638;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 0.68rem;
+      text-align: center;
+      opacity: 0.35;
+      transition: all 0.2s;
+    }
+    .achieve-card.unlocked {
+      opacity: 1.0;
+      border-color: var(--gold);
+      background: rgba(255, 179, 0, 0.08);
+      box-shadow: 0 0 8px rgba(255, 179, 0, 0.2);
+    }
+    .achieve-card-icon { font-size: 1.4rem; margin-bottom: 2px; }
+    .achieve-card-title { font-weight: 900; color: #fff; }
+    .achieve-card-desc { color: #8899bb; font-size: 0.62rem; margin-top: 2px; }
+
+    .pop-text {
+      position: absolute;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 0 0 8px #000, 1px 1px 0 #000;
+      pointer-events: none;
+      animation: popAnim 0.85s forwards ease-out;
+      z-index: 80;
+    }
+    @keyframes popAnim { 0% { transform: translateY(0) scale(0.8); opacity: 1; } 100% { transform: translateY(-70px) scale(1.2); opacity: 0; } }
+
+    .dragon-roar-banner {
+      position: fixed;
+      top: 50%;
+      left: 32%;
+      transform: translate(-50%, -50%) scale(0);
+      background: radial-gradient(circle, #7c4dff, #d500f9);
+      border: 4px solid #fff;
+      border-radius: 20px;
+      padding: 20px 40px;
+      text-align: center;
+      box-shadow: 0 0 60px #d500f9;
+      z-index: 90;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .dragon-roar-banner.show { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+
+    .jackpot-banner {
+      position: fixed;
+      top: 40%;
+      left: 32%;
+      transform: translate(-50%, -50%) scale(0);
+      background: radial-gradient(circle, #ffe600, #ff0055);
+      border: 4px solid #fff;
+      border-radius: 18px;
+      padding: 16px 32px;
+      text-align: center;
+      box-shadow: 0 0 60px #ffea00, 0 0 90px #ff0055;
+      z-index: 85;
+      pointer-events: none;
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+      opacity: 0;
+    }
+    .jackpot-banner.show { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+
+    .rainbow-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      z-index: 5;
+    }
+    .rainbow-layer.active { display: block; }
+    .rainbow-spin {
+      position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: repeating-conic-gradient(#f00 0deg 15deg, #ff8800 15deg 30deg, #ff0 30deg 45deg, #0f0 45deg 60deg, #0ff 60deg 75deg, #00f 75deg 90deg, #f0f 90deg 105deg, #f00 105deg 120deg);
+      animation: spinR 3s linear infinite; opacity: 0.22; mix-blend-mode: screen;
+    }
+    @keyframes spinR { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .toast-item {
+      background: rgba(20, 20, 32, 0.95);
+      border-left: 4px solid var(--gold);
+      border-radius: 6px;
+      padding: 8px 14px;
+      color: #fff;
+      font-size: 0.8rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      animation: toastIn 0.3s ease-out;
+    }
+    @keyframes toastIn { 0% { transform: translateX(50px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 120;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-box {
+      background: #181828;
+      border: 2px solid #3c3c5c;
+      border-radius: 14px;
+      padding: 22px;
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    }
+
+    /* オートセーブ通知インジケーター */
+    .autosave-indicator {
+      position: fixed;
+      top: 14px;
+      right: 480px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1.5px solid #38bdf8;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: #38bdf8;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 110;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    .autosave-indicator.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .autosave-indicator .save-icon {
+      font-size: 0.85rem;
+      display: inline-block;
+    }
+    .autosave-indicator.spin .save-icon {
+      animation: spinSave 0.5s ease;
+    }
+    @keyframes spinSave {
+      0% { transform: rotate(0deg) scale(0.9); }
+      50% { transform: rotate(180deg) scale(1.25); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    .interval-btn {
+      padding: 3px 8px;
+      font-size: 0.68rem;
+      background: #1c1c2e;
+      color: #8899bb;
+      border: 1px solid #33334d;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .interval-btn:hover { background: #28283e; color: #fff; }
+    .interval-btn.active {
+      background: var(--cyan);
+      color: #000;
+      border-color: #fff;
+      font-weight: 900;
+      box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+    }
+
+    /* 一括購入バー */
+    .bulk-buy-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      background: #11111e;
+      border-bottom: 1.5px solid var(--border-color);
+      gap: 6px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .bulk-label {
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: #8899bb;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .bulk-btn-group {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .bulk-btn {
+      padding: 3px 9px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      border-radius: 6px;
+      background: #19192b;
+      color: #8899bb;
+      border: 1px solid #32324d;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .bulk-btn:hover {
+      background: #25253f;
+      color: #fff;
+      border-color: #55557a;
+    }
+    .bulk-btn.active {
+      background: linear-gradient(135deg, var(--cyan), #00b0ff);
+      color: #000;
+      border-color: #fff;
+      font-weight: 900;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
+    }
+
+    @media (max-width: 840px) {
+      .game-wrapper { flex-direction: column; }
+      .shop-area { width: 100%; max-width: 100%; height: 52vh; }
+      .stage-area { height: 48vh; border-right: none; border-bottom: 2px solid var(--border-color); }
+      .jackpot-banner, .dragon-roar-banner { left: 50%; }
+      .autosave-indicator { right: 14px; top: auto; bottom: 53vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-wrapper">
+
+    <!-- 左側：メトロノーム大合奏ステージ -->
+    <div class="stage-area" id="stage">
+
+      <div class="top-bar">
+        <div class="money-container">
+          <div class="money-text" id="moneyTxt">0 円</div>
+          <div class="sub-stats">
+            <span>1振り: <b id="powerTxt">+1円</b></span>
+            <span>テンポ: <b id="bpmTxt">BPM 30</b></span>
+            <span>台数: <b id="unitsTxt">1台</b></span>
+            <span>CPS: <b id="cpsTxt">0円/秒</b></span>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button id="ascendHeaderBtn" class="act-btn">🌌 昇天 (<span id="availNotesTxt">0</span>音符)</button>
+          <button id="boostBtn" class="act-btn" disabled>🔒 確変ブースト</button>
+          <button id="autoBtn" class="act-btn" disabled>🔒 AUTO [未解放]</button>
+          <button id="muteBtn" class="act-btn" title="サウンド切替">🔊</button>
+        </div>
+      </div>
+
+      <div class="metro-grid-wrapper" id="metroClickArea">
+        <div class="metro-grid count-1" id="metroGrid"></div>
+        <div class="timing-badge" id="timingBadge">
+          <span style="color: #667799; font-size: 0.85rem;">メトロノームをタップして刻め！端でPERFECT！</span>
+        </div>
+      </div>
+
+      <div class="spring-container">
+        <button class="spring-winder-btn" id="springBtn" title="連打してゼンマイを巻く！">🌀</button>
+        <div>
+          <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 2px;">手動ゼンマイブースト</div>
+          <div class="spring-gauge"><div class="spring-fill" id="springBar"></div></div>
+        </div>
+      </div>
+
+      <div class="golden-metro" id="goldenMetro"></div>
+
+    </div>
+
+    <!-- 右側：ショップ＆多機能パネル -->
+    <div class="shop-area">
+      <div class="tab-nav">
+        <button class="tab-item active" data-tab="tabMetro">⚙️ 工房</button>
+        <button class="tab-item" data-tab="tabFac">🎻 施設</button>
+        <button class="tab-item" data-tab="tabDragon">🐉 守護龍</button>
+        <button class="tab-item" data-tab="tabCasino">🎰 幸運</button>
+        <button class="tab-item" data-tab="tabAscend">🌌 昇天</button>
+        <button class="tab-item" data-tab="tabAchieve">🏆 実績/記録</button>
+      </div>
+
+      <!-- 一括購入切り替えバー -->
+      <div class="bulk-buy-bar" id="bulkBuyBar">
+        <span class="bulk-label">🛒 一括購入:</span>
+        <div class="bulk-btn-group">
+          <button class="bulk-btn active" data-bulk="1">1個</button>
+          <button class="bulk-btn" data-bulk="10">10個</button>
+          <button class="bulk-btn" data-bulk="25">25個</button>
+          <button class="bulk-btn" data-bulk="100">100個</button>
+          <button class="bulk-btn" data-bulk="max">MAX</button>
+        </div>
+      </div>
+
+
+      <!-- タブ1：工房強化 -->
+      <div class="tab-pane active" id="tabMetro">
+        <div class="shop-list">
+          <button class="shop-card" id="btnSpeedUp">
+            <div class="shop-card-left">
+              <div class="shop-icon">⚡</div>
+              <div class="shop-details">
+                <span class="shop-name">ギア加速 (テンポUP)</span>
+                <span class="shop-cost" id="speedCostTxt">15 円</span>
+                <span class="shop-effect">基本テンポ+15 (現在BPM: <b id="currentBpmLabel">30</b>)</span>
+              </div>
+            </div>
+            <div class="shop-level" id="speedLvlTxt">Lv.1</div>
+          </button>
+
+          <button class="shop-card" id="btnAddUnit">
+            <div class="shop-card-left">
+              <div class="shop-icon">📦</div>
+              <div class="shop-details">
+                <span class="shop-name">メトロノーム増設</span>
+                <span class="shop-cost" id="unitCostTxt">180 円</span>
+                <span class="shop-effect">台数+1台！全台が一斉にスイングして倍増！</span>
+              </div>
+            </div>
+            <div class="shop-level" id="unitCountTxt">1/16</div>
+          </button>
+
+          <button class="shop-card" id="btnMaterial">
+            <div class="shop-card-left">
+              <div class="shop-icon">🔨</div>
+              <div class="shop-details">
+                <span class="shop-name" id="matNextName">真鍮振り子の錬成</span>
+                <span class="shop-cost" id="matCostTxt">120 円</span>
+                <span class="shop-effect">振り子の材質を強化！全威力 <b id="matNextMult">x1.5</b></span>
+              </div>
+            </div>
+            <div class="shop-level" id="matCurrentTxt">木製</div>
+          </button>
+
+          <button class="shop-card" id="btnUnlockAuto">
+            <div class="shop-card-left">
+              <div class="shop-icon">⚙️</div>
+              <div class="shop-details">
+                <span class="shop-name">自動往復ゼンマイ機構</span>
+                <span class="shop-cost" id="unlockAutoCostTxt">250 円</span>
+                <span class="shop-effect">AUTO運転を解放！自動で一定テンポで振る。</span>
+              </div>
+            </div>
+            <div class="shop-level" id="unlockAutoStatus">未解放</div>
+          </button>
+
+          <button class="shop-card" id="btnSaveAuto">
+            <div class="shop-card-left">
+              <div class="shop-icon">🛢️</div>
+              <div class="shop-details">
+                <span class="shop-name">省エネ潤滑油</span>
+                <span class="shop-cost" id="fuelCostTxt">80 円</span>
+                <span class="shop-effect">AUTO消費燃料を-1円軽減 (現在: <b id="fuelCostLabel">5</b>円/回)</span>
+              </div>
+            </div>
+            <div class="shop-level" id="fuelLvlTxt">Lv.0</div>
+          </button>
+
+          <button class="shop-card" id="btnTimingUp">
+            <div class="shop-card-left">
+              <div class="shop-icon">🎯</div>
+              <div class="shop-details">
+                <span class="shop-name">リズム感覚醒</span>
+                <span class="shop-cost" id="timingCostTxt">120 円</span>
+                <span class="shop-effect">端でのジャストタップ(PERFECT)の倍率+0.5！</span>
+              </div>
+            </div>
+            <div class="shop-level" id="timingLvlTxt">x2.0</div>
+          </button>
+
+          <button class="shop-card" id="btnSpringUp">
+            <div class="shop-card-left">
+              <div class="shop-icon">🌀</div>
+              <div class="shop-details">
+                <span class="shop-name">強化ゼンマイ鋼</span>
+                <span class="shop-cost" id="springCostTxt">100 円</span>
+                <span class="shop-effect">ゼンマイの減衰を緩和＆手動巻きの持続力UP！</span>
+              </div>
+            </div>
+            <div class="shop-level" id="springLvlTxt">Lv.1</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- タブ2：施設 -->
+      <div class="tab-pane" id="tabFac">
+        <div style="font-size: 0.73rem; color: #8899bb; margin-bottom: 8px;">
+          共鳴メンバーを雇用して1振りの威力をインフレさせよう。(25/50/100/150/200個でマイルストーン倍増！)
+        </div>
+        <div class="shop-list" id="facList"></div>
+      </div>
+
+      <!-- タブ3：守護龍 -->
+      <div class="tab-pane" id="tabDragon">
+        <div class="dragon-container">
+          <div class="dragon-avatar" id="dragonAvatar">🥚</div>
+          <div style="font-size: 1.15rem; font-weight: 900; color: #ea80fc;" id="dragonTitle">謎のリズム卵</div>
+          <div style="font-size: 0.75rem; color: #bbb; margin: 8px 0 16px;" id="dragonDesc">
+            メトロノームの微かな振動に反応している。温めることで孵化するかもしれない。
+          </div>
+          <div style="font-size: 0.8rem; color: #00e676; margin-bottom: 12px;" id="dragonBuff">
+            効果: 未覚醒
+          </div>
+          <button class="act-btn" id="dragonUpgradeBtn" style="background: linear-gradient(135deg, #aa00ff, #00e5ff); color:#fff; padding: 10px 24px; margin: 0 auto; font-size: 0.85rem;">
+            卵を温める (10,000円)
+          </button>
+        </div>
+      </div>
+
+      <!-- タブ4：カジノ -->
+      <div class="tab-pane" id="tabCasino">
+        <div style="font-size: 0.73rem; color: #8899bb; margin-bottom: 8px;">
+          運命のサイコロと確変フィーバーを解禁・強化して一攫千金を狙おう。
+        </div>
+        <div class="shop-list">
+          <button class="shop-card" id="btnUnlockSlot">
+            <div class="shop-card-left">
+              <div class="shop-icon">🎰</div>
+              <div class="shop-details">
+                <span class="shop-name">幸運のベル (スロット解放)</span>
+                <span class="shop-cost" id="slotCostTxt">500 円</span>
+                <span class="shop-effect">スイング時に1.5%で🔔小当り(5倍)が発生するようになる！</span>
+              </div>
+            </div>
+            <div class="shop-level" id="slotStatus">未解放</div>
+          </button>
+
+          <button class="shop-card" id="btnUnlockJackpot">
+            <div class="shop-card-left">
+              <div class="shop-icon">🎰</div>
+              <div class="shop-details">
+                <span class="shop-name">777 大当り機構</span>
+                <span class="shop-cost" id="jackpotCostTxt">4,000 円</span>
+                <span class="shop-effect">スロットに777大当り(30倍)が追加され確率上昇！</span>
+              </div>
+            </div>
+            <div class="shop-level" id="jackpotStatus">未解放</div>
+          </button>
+
+          <button class="shop-card" id="btnUnlockBoost">
+            <div class="shop-card-left">
+              <div class="shop-icon">⚡</div>
+              <div class="shop-details">
+                <span class="shop-name">確変オーバードライブ</span>
+                <span class="shop-cost" id="boostUnlockCostTxt">2,000 円</span>
+                <span class="shop-effect">確変ブーストボタンを解放！(10秒間テンポ3倍＆威力10倍)</span>
+              </div>
+            </div>
+            <div class="shop-level" id="boostUnlockStatus">未解放</div>
+          </button>
+
+          <button class="shop-card" id="btnUnlockGolden">
+            <div class="shop-card-left">
+              <div class="shop-icon">✦</div>
+              <div class="shop-details">
+                <span class="shop-name">黄金の調律音叉</span>
+                <span class="shop-cost" id="goldenCostTxt">2,500 円</span>
+                <span class="shop-effect">黄金メトロノームが飛来するようになる！(クリックで10倍)</span>
+              </div>
+            </div>
+            <div class="shop-level" id="goldenStatus">未解放</div>
+          </button>
+
+          <button class="shop-card" id="btnGoldenUp">
+            <div class="shop-card-left">
+              <div class="shop-icon">✨</div>
+              <div class="shop-details">
+                <span class="shop-name">黄金の狂乱強化</span>
+                <span class="shop-cost" id="goldenUpCostTxt">80,000 円</span>
+                <span class="shop-effect">黄金メトロノームの倍率を大幅強化！(10倍 → 77倍 → 777倍)</span>
+              </div>
+            </div>
+            <div class="shop-level" id="goldenUpLvlTxt">Lv.1</div>
+          </button>
+
+          <button class="shop-card" id="btnBoostExt">
+            <div class="shop-card-left">
+              <div class="shop-icon">⏳</div>
+              <div class="shop-details">
+                <span class="shop-name">確変フィーバー時間延長</span>
+                <span class="shop-cost" id="boostExtCostTxt">15,000 円</span>
+                <span class="shop-effect">確変ブーストの持続時間を +2秒延長！</span>
+              </div>
+            </div>
+            <div class="shop-level" id="boostExtLvlTxt">+0秒</div>
+          </button>
+
+          <button class="shop-card" id="btnDiceBonus">
+            <div class="shop-card-left">
+              <div class="shop-icon">🎲</div>
+              <div class="shop-details">
+                <span class="shop-name">豪運の黄金ダイス</span>
+                <span class="shop-cost" id="diceCostTxt">50,000,000 円</span>
+                <span class="shop-effect">スロット当選時の全賞金が恒久的に2倍になる！</span>
+              </div>
+            </div>
+            <div class="shop-level" id="diceStatus">未購入</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- タブ5：昇天 -->
+      <div class="tab-pane" id="tabAscend">
+        <div style="background: rgba(124, 77, 255, 0.1); border: 1.5px solid #7c4dff; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 14px;">
+          <div style="font-size: 1.2rem; font-weight: 900; color: #80d8ff;">🌌 天界の昇天 (プレステージ)</div>
+          <div style="font-size: 0.75rem; color: #bbb; margin: 6px 0;">
+            全てを音楽の神へと捧げ、所持金と施設をリセットする代わりに<br><b style="color: #ffd700;">天上の音符</b>を獲得して永遠の力を得ます。
+          </div>
+          <div style="font-size: 0.85rem; font-weight: 900; color: #00e5ff; margin: 8px 0;">
+            保有音符: <span id="currentNotesTxt">0</span> 個 (全生産 <span id="notesBuffTxt">+0%</span>)
+          </div>
+          <button class="act-btn" id="doAscendBtn" style="background: linear-gradient(135deg, #7c4dff, #00b0ff); color:#fff; padding: 9px 22px; margin: 6px auto 0;" disabled>
+            昇天して <span id="gainNotesTxt">0</span> 音符を獲得
+          </button>
+          <div style="font-size: 0.68rem; color: #8899bb; margin-top: 4px;" id="ascendRequirementTxt">
+            (昇天条件: 累計5,000万円以上の獲得)
+          </div>
+        </div>
+
+        <div style="font-size: 0.76rem; font-weight: bold; color: #aaa; margin-bottom: 8px;">天界スキルツリー (音符を消費して恒久取得):</div>
+        <div class="shop-list" id="ascendTreeList"></div>
+      </div>
+
+      <!-- タブ6：実績/記録 -->
+      <div class="tab-pane" id="tabAchieve">
+        <div style="font-size: 0.8rem; line-height: 1.8; color: #bbb; background: #13131f; padding: 12px; border-radius: 8px; margin-bottom: 14px;">
+          <div>累計獲得金額: <b id="stEarned" style="color: var(--gold);">0円</b></div>
+          <div>メトロノームスイング回数: <b id="stSwings" style="color: var(--cyan);">0回</b></div>
+          <div>PERFECT目押し成功: <b id="stPerfects" style="color: #00e676;">0回</b></div>
+          <div>最大PERFECTコンボ: <b id="stMaxCombo" style="color: #ff007f;">0連続</b></div>
+          <div>スロット大当り回数: <b id="stJackpots" style="color: #ff9900;">0回</b></div>
+          <div>黄金メトロノーム捕獲: <b id="stGolden" style="color: #ffd700;">0回</b></div>
+          <div>昇天回数: <b id="stAscensions" style="color: #b388ff;">0回</b></div>
+          <div>実績解除数: <b id="stAchieves" style="color: #fff;">0 / 39</b> (<span id="achieveBuffTxt">+0% 全生産ボーナス</span>)</div>
+        </div>
+
+        <!-- オートセーブ設定パネル -->
+        <div class="setting-box" style="background: #151525; border: 1.5px solid #28283c; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 0.82rem; font-weight: 900; color: #fff;">💾 オートセーブ機能</span>
+            <span id="autoSaveBadge" style="font-size: 0.68rem; color: #00e676; background: rgba(0,230,118,0.12); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(0,230,118,0.3);">● 稼働中 (5秒ごと)</span>
+          </div>
+          <div style="font-size: 0.72rem; color: #aaa; line-height: 1.6; margin-bottom: 8px;">
+            <div>最終自動保存: <b id="lastSaveAgoTxt" style="color: var(--cyan);">たった今</b></div>
+            <div>保存データ容量: <span id="saveDataSizeTxt" style="color: #bbb;">約 2.4 KB</span></div>
+            <div style="color: #7788aa; font-size: 0.66rem; margin-top: 2px;">※定期セーブのほか、施設購入・強化・昇天時やタブ終了時にも自動で即時保護されます。</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <label style="font-size: 0.75rem; color: #ddd; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="chkAutoSave" checked style="cursor: pointer; width: 15px; height: 15px;"> オートセーブを有効にする
+            </label>
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <span style="font-size: 0.7rem; color: #8899bb;">自動セーブ間隔:</span>
+            <button class="interval-btn" data-sec="3">3秒</button>
+            <button class="interval-btn active" data-sec="5">5秒 (推奨)</button>
+            <button class="interval-btn" data-sec="15">15秒</button>
+            <button class="interval-btn" data-sec="30">30秒</button>
+            <button class="interval-btn" data-sec="60">60秒</button>
+          </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid #28283c; margin: 16px 0;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="act-btn" id="saveBtn" style="background:#283593; color:#fff;">💾 手動保存</button>
+          <button class="act-btn" id="exportBtn" style="background:#37474f; color:#fff;">📤 セーブ書き出し</button>
+          <button class="act-btn" id="importBtn" style="background:#455a64; color:#fff;">📥 セーブ読み込み</button>
+          <button class="act-btn" id="resetBtn" style="background:#b71c1c; color:#fff;">⚠️ データ初期化</button>
+        </div>
+
+        <div style="font-size: 0.78rem; font-weight: bold; color: #aaa; margin: 16px 0 8px;">🏆 実績一覧:</div>
+        <div class="achieve-grid" id="achieveGrid"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="jackpot-banner" id="jackpotBanner">
+    <div style="font-size: 2.1rem; font-weight: 900; color: #fff;">🎰 777 大当り!! 🎰</div>
+    <div style="font-size: 1.25rem; font-weight: 900; color: #000;" id="jackpotTxt">+0円</div>
+  </div>
+
+  <div class="dragon-roar-banner" id="dragonRoarBanner">
+    <div style="font-size: 2.2rem; font-weight: 900; color: #fff;">🐉 龍の咆哮!! 🐉</div>
+    <div style="font-size: 1.2rem; font-weight: 900; color: #ffd700;">疾風の25連打撃!!</div>
+    <div style="font-size: 1.1rem; font-weight: 900; color: #fff;" id="dragonRoarTxt">+0円</div>
+  </div>
+
+  <div class="rainbow-layer" id="rainbowLayer">
+    <div class="rainbow-spin"></div>
+  </div>
+
+  <!-- オートセーブインジケーター -->
+  <div class="autosave-indicator" id="autoSaveIndicator">
+    <span class="save-icon">💾</span>
+    <span id="autoSaveIndicatorTxt">オートセーブ完了</span>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="modal-backdrop" id="offlineModal">
+    <div class="modal-box">
+      <div style="font-size: 2.5rem; margin-bottom: 6px;">🎻💤</div>
+      <div style="font-size: 1.3rem; font-weight: 900; color: #fff;">おかえりなさい！</div>
+      <div style="font-size: 0.8rem; color: #aaa; margin: 8px 0;" id="offlineTimeTxt">不在の間も自動演奏が続いていました。</div>
+      <div style="font-size: 1.6rem; font-weight: 900; color: var(--gold); margin: 12px 0;" id="offlineEarnedTxt">+0 円</div>
+      <button class="act-btn" id="offlineOkBtn" style="background: linear-gradient(135deg, #00e676, #00b0ff); color:#000; padding: 10px 24px; margin: 0 auto; font-weight:900;">受け取る</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="ascendModal">
+    <div class="modal-box">
+      <div style="font-size: 2.5rem; margin-bottom: 6px;">🌌</div>
+      <div style="font-size: 1.3rem; font-weight: 900; color: #80d8ff;">昇天の儀式</div>
+      <div style="font-size: 0.8rem; color: #ccc; margin: 10px 0; line-height: 1.6;">
+        現在の所持金、施設、メトロノーム台数、BPMはリセットされます。<br>
+        代わりに <b style="color: #ffd700;" id="modalGainNotes">0</b> 個の【天上の音符】を獲得し、<br>
+        天界スキルと実績ボーナスは引き継がれます。<br><br>
+        本当に昇天しますか？
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+        <button class="act-btn" id="modalAscendCancelBtn" style="background: #444; color:#fff;">キャンセル</button>
+        <button class="act-btn" id="modalAscendConfirmBtn" style="background: linear-gradient(135deg, #7c4dff, #00b0ff); color:#fff; font-weight: 900;">昇天する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- スクリプト -->
+  <script>
+    // --- 大数フォーマッター ---
+    const UNITS = [
+      { val: 1e68, name: "無量大数" }, { val: 1e64, name: "不可思議" }, { val: 1e60, name: "那由他" },
+      { val: 1e56, name: "阿僧祇" },   { val: 1e52, name: "恒河沙" },   { val: 1e48, name: "極" },
+      { val: 1e44, name: "載" },       { val: 1e40, name: "正" },       { val: 1e36, name: "澗" },
+      { val: 1e32, name: "溝" },       { val: 1e28, name: "穣" },       { val: 1e24, name: "秭" },
+      { val: 1e20, name: "垓" },       { val: 1e16, name: "京" },       { val: 1e12, name: "兆" },
+      { val: 1e8,  name: "億" },       { val: 1e4,  name: "万" }
+    ];
+
+    function fmt(n) {
+      if (n === null || isNaN(n) || n === undefined) return "0";
+      if (n < 10) return n.toFixed(1);
+      if (n < 10000) return Math.floor(n).toLocaleString('ja-JP');
+      for (let i = 0; i < UNITS.length; i++) {
+        if (n >= UNITS[i].val) {
+          return `${parseFloat((n / UNITS[i].val).toFixed(3))} ${UNITS[i].name}`;
+        }
+      }
+      return n.toExponential(3);
+    }
+
+    // --- サウンド合成 ---
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTickSound(high, pitchOffset = 0) {
+      if (G.soundMuted) return;
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = (high ? 750 : 580) + pitchOffset;
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.035);
+      } catch(e) {}
+    }
+
+    function playPerfectChime() {
+      if (G.soundMuted) return;
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } catch(e) {}
+    }
+
+    function playKyuinSound() {
+      if (G.soundMuted) return;
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        for (let i = 0; i < 6; i++) {
+          const t = now + i * 0.07;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(1400, t);
+          osc.frequency.exponentialRampToValueAtTime(3000, t + 0.06);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(t);
+          osc.stop(t + 0.07);
+        }
+      } catch(e) {}
+    }
+
+    function playRoarSound() {
+      if (G.soundMuted) return;
+      initAudio();
+      if (!audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.linearRampToValueAtTime(70, now + 0.5);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } catch(e) {}
+    }
+
+    // --- 定数データ ---
+    const MATERIALS = [
+      { name: "木製", cost: 0, mult: 1.0 },
+      { name: "真鍮", cost: 120, mult: 1.5 },
+      { name: "鋼鉄", cost: 1800, mult: 2.2 },
+      { name: "チタン合金", cost: 25000, mult: 3.5 },
+      { name: "カーボンナノ", cost: 400000, mult: 6.0 },
+      { name: "ダイヤモンド", cost: 6e6, mult: 12.0 },
+      { name: "オリハルコン", cost: 100e6, mult: 30.0 },
+      { name: "反物質コア", cost: 2e9, mult: 80.0 },
+      { name: "ダークマター", cost: 50e9, mult: 250.0 },
+      { name: "超弦の光糸", cost: 1.5e12, mult: 1000.0 }
+    ];
+
+    const FACILITIES = [
+      { id: 'f_hand',   name: '手拍子グランマ',     icon: '👵', baseCost: 30,      power: 0.5,    desc: '温かい手拍子で応援' },
+      { id: 'f_drum',   name: 'リズム小太鼓',       icon: '🥁', baseCost: 160,     power: 3,      desc: '心地よい行進曲の鼓動' },
+      { id: 'f_tri',    name: 'トライアングル少年', icon: '🔺', baseCost: 900,     power: 18,     desc: '透き通る高音の引き締め' },
+      { id: 'f_bell',   name: '拍子時計塔',         icon: '🔔', baseCost: 5200,    power: 110,    desc: '街全体に響く鐘の音' },
+      { id: 'f_casta',  name: '超絶カスタネット',   icon: '🪗', baseCost: 30000,   power: 650,    desc: '超絶技巧の連打リズム' },
+      { id: 'f_brass',  name: '黄金ブラス隊',       icon: '🎺', baseCost: 180000,  power: 4200,   desc: '金管楽器の熱狂咆哮' },
+      { id: 'f_harp',   name: '天空のハープ奏者',   icon: '🎵', baseCost: 1.4e6,   power: 32000,  desc: '優美な共鳴の増幅' },
+      { id: 'f_synth',  name: '電子シンセ工房',     icon: '🎹', baseCost: 12e6,    power: 260000, desc: '矩形波の電脳ビート' },
+      { id: 'f_organ',  name: '人力パイプオルガン', icon: '🏰', baseCost: 100e6,   power: 2.2e6,  desc: '荘厳なる大地低音' },
+      { id: 'f_temple', name: '拍子の古代神殿',     icon: '🏛️', baseCost: 900e6,   power: 20e6,   desc: '太古より伝わる永遠の儀式' },
+      { id: 'f_dome',   name: '超音波共鳴ドーム',   icon: '📡', baseCost: 8e9,     power: 180e6,  desc: '分子すら同期させる音波' },
+      { id: 'f_fleet',  name: '宇宙交響艦隊',       icon: '🚀', baseCost: 75e9,    power: 1.7e9,  desc: '惑星間パルス交響曲' },
+      { id: 'f_accel',  name: '時空拍子加速器',     icon: '🌀', baseCost: 700e9,   power: 16e9,   desc: '1秒を100万回振るう時空歪曲' },
+      { id: 'f_galaxy', name: '銀河メトロノーム星', icon: '🪐', baseCost: 7e12,    power: 160e9,  desc: '自転そのものが振り子の天体' },
+      { id: 'f_quantum',name: '量子もつれ弦楽団',   icon: '⚛️', baseCost: 80e12,   power: 1.8e12, desc: '確率収縮による無限拍子' },
+      { id: 'f_god',    name: '次元調律神',         icon: '🌌', baseCost: 1e15,    power: 22e12,  desc: '宇宙法則そのものを奏でる神' }
+    ];
+
+    const DRAGON_STAGES = [
+      { lvl: 0, name: "謎のリズム卵", avatar: "🥚", cost: 10000, action: "卵を温める", desc: "微かな振動に反応している。温めることで孵化するかもしれない。", buff: "効果: 未覚醒" },
+      { lvl: 1, name: "リズムベイビー", avatar: "🐣", cost: 250000, action: "歌の稽古をつける", desc: "生まれたばかりの愛らしい幼龍。リズムに合わせて鳴く。", buff: "効果: 全生産力 +50% (x1.5)" },
+      { lvl: 2, name: "疾風の音龍", avatar: "🐲", cost: 15e6, action: "音速飛翔の特訓", desc: "音速を超えて羽ばたく巨龍。時折ステージに轟く咆哮を放つ。", buff: "効果: 全生産力 x3.0 ＆ 手動時にたまに「龍の咆哮(25連打撃)」" },
+      { lvl: 3, name: "調律天龍", avatar: "🐉", cost: 800e6, action: "星辰の調律を行う", desc: "星々の運行とメトロノームを同期させる神聖なる龍。", buff: "効果: 全生産力 x10.0 ＆ 黄金メトロノーム出現率2倍、確変時間+5秒" },
+      { lvl: 4, name: "終焉と原初の響龍", avatar: "🌌", cost: 50e9, action: "次元の封印を解く", desc: "宇宙の開闢と終焉のリズムを司る最強の究極龍。", buff: "効果: 全生産力 x50.0 ＆ 大当り確率+3%、PERFECT倍率恒久2倍" },
+      { lvl: 5, name: "響龍・極限覚醒", avatar: "👑", cost: Infinity, action: "覚醒完了", desc: "これ以上の進化は存在しない。宇宙の頂点たるリズムの覇者。", buff: "効果: 全生産力 x50.0 ＆ 全パッシブ最大化" }
+    ];
+
+    const ASCEND_UPGRADES = [
+      { id: 'asc_tempo',  name: '始原の拍子', cost: 1,  desc: '昇天後の初期BPM恒久+25' },
+      { id: 'asc_spring', name: '永久のゼンマイ', cost: 2, desc: 'ゼンマイが常に50%以上を維持＆減衰半減' },
+      { id: 'asc_auto',   name: '無限往復機関', cost: 4, desc: 'AUTOが最初から解放＆消費燃料完全無料' },
+      { id: 'asc_combo',  name: '絶対音感', cost: 8,     desc: 'PERFECTコンボ上限が50まで拡大＆倍率上昇' },
+      { id: 'asc_golden', name: '星辰の奇跡', cost: 15,  desc: '黄金メトロノームの持続時間+10秒＆出現率2倍' },
+      { id: 'asc_mult',   name: '大宇宙の共鳴', cost: 25, desc: '全共鳴施設の基礎威力が恒久的に+100%' },
+      { id: 'asc_units',  name: '超次元グリッド', cost: 40, desc: 'メトロノーム最大増設上限を16台→20台へ拡張' },
+      { id: 'asc_god',    name: '創世のタクト', cost: 100, desc: '全生産力（CPS＆タップ威力）恒久 5倍！' }
+    ];
+
+    const ACHIEVEMENTS = [
+      { id: "click_1", name: "最初の一振り", desc: "メトロノームを1回振る", icon: "🎵", check: g => g.swings >= 1 },
+      { id: "click_50", name: "テンポキープ", desc: "メトロノームを50回振る", icon: "🕒", check: g => g.swings >= 50 },
+      { id: "click_300", name: "リズム狂信者", desc: "メトロノームを300回振る", icon: "⚡", check: g => g.swings >= 300 },
+      { id: "click_1000", name: "拍子の達人", desc: "メトロノームを1,000回振る", icon: "🎼", check: g => g.swings >= 1000 },
+      { id: "click_5000", name: "無限の律動", desc: "メトロノームを5,000回振る", icon: "🌀", check: g => g.swings >= 5000 },
+      { id: "perf_1", name: "ジャストビート", desc: "PERFECT判定を1回出す", icon: "🎯", check: g => g.perfects >= 1 },
+      { id: "perf_20", name: "リズムの申し子", desc: "PERFECT判定を20回出す", icon: "🎯", check: g => g.perfects >= 20 },
+      { id: "perf_100", name: "絶対リズム感", desc: "PERFECT判定を100回出す", icon: "🎯", check: g => g.perfects >= 100 },
+      { id: "combo_5", name: "ビートの波", desc: "PERFECTコンボ5連続", icon: "🔥", check: g => g.maxCombo >= 5 },
+      { id: "combo_15", name: "グルーヴマスター", desc: "PERFECTコンボ15連続", icon: "🔥", check: g => g.maxCombo >= 15 },
+      { id: "combo_30", name: "神域のシンクロ", desc: "PERFECTコンボ30連続", icon: "🔥", check: g => g.maxCombo >= 30 },
+      { id: "earn_100", name: "初任給", desc: "累計100円稼ぐ", icon: "🪙", check: g => g.totalEarned >= 100 },
+      { id: "earn_1k", name: "小銭稼ぎ", desc: "累計1,000円稼ぐ", icon: "🪙", check: g => g.totalEarned >= 1000 },
+      { id: "earn_50k", name: "街の演奏家", desc: "累計5万円稼ぐ", icon: "💰", check: g => g.totalEarned >= 50000 },
+      { id: "earn_1m", name: "プロミュージシャン", desc: "累計100万円稼ぐ", icon: "💎", check: g => g.totalEarned >= 1e6 },
+      { id: "earn_50m", name: "楽団オーナー", desc: "累計5,000万円稼ぐ", icon: "👑", check: g => g.totalEarned >= 5e7 },
+      { id: "earn_1b", name: "音楽財閥", desc: "累計10億円稼ぐ", icon: "🪐", check: g => g.totalEarned >= 1e9 },
+      { id: "earn_1t", name: "兆のシンフォニー", desc: "累計1兆円稼ぐ", icon: "🌌", check: g => g.totalEarned >= 1e12 },
+      { id: "earn_1q", name: "京の超弦共鳴", desc: "累計1京円稼ぐ", icon: "✨", check: g => g.totalEarned >= 1e16 },
+      { id: "unit_2", name: "二重奏 (デュオ)", desc: "メトロノームを2台に増設", icon: "📦", check: g => g.unitCount >= 2 },
+      { id: "unit_4", name: "四重奏 (カルテット)", desc: "メトロノームを4台に増設", icon: "📦", check: g => g.unitCount >= 4 },
+      { id: "unit_8", name: "八重奏 (オクテット)", desc: "メトロノームを8台に増設", icon: "📦", check: g => g.unitCount >= 8 },
+      { id: "unit_12", name: "大合奏団", desc: "メトロノームを12台に増設", icon: "📦", check: g => g.unitCount >= 12 },
+      { id: "unit_16", name: "メトロノーム要塞", desc: "メトロノームを16台に増設", icon: "📦", check: g => g.unitCount >= 16 },
+      { id: "unit_20", name: "時空フルオーケストラ", desc: "メトロノーム最大20台達成", icon: "📦", check: g => g.unitCount >= 20 },
+      { id: "bpm_120", name: "モデラート", desc: "テンポBPM 120達成", icon: "⏱️", check: g => getBPM() >= 120 },
+      { id: "bpm_300", name: "ヴィヴァーチェ", desc: "テンポBPM 300達成", icon: "⏱️", check: g => getBPM() >= 300 },
+      { id: "bpm_600", name: "プレスト", desc: "テンポBPM 600達成", icon: "⏱️", check: g => getBPM() >= 600 },
+      { id: "bpm_1200", name: "プレスティッシモ", desc: "テンポBPM 1200達成", icon: "⏱️", check: g => getBPM() >= 1200 },
+      { id: "mat_3", name: "硬質の音色", desc: "チタン合金の振り子を錬成", icon: "🔨", check: g => g.materialLvl >= 3 },
+      { id: "mat_6", name: "幻の金属", desc: "オリハルコンの振り子を錬成", icon: "🔨", check: g => g.materialLvl >= 6 },
+      { id: "mat_9", name: "宇宙の真理", desc: "超弦理論の光糸を錬成", icon: "🔨", check: g => g.materialLvl >= 9 },
+      { id: "dragon_1", name: "生命の鼓動", desc: "守護龍の卵を孵化させる", icon: "🐣", check: g => g.dragonLvl >= 1 },
+      { id: "dragon_2", name: "大空の咆哮", desc: "疾風の音龍へ進化", icon: "🐲", check: g => g.dragonLvl >= 2 },
+      { id: "dragon_4", name: "終焉と原初の響龍", avatar: "🌌", check: g => g.dragonLvl >= 4 },
+      { id: "casino_jackpot", name: "ラッキーフィーバー", desc: "スロットで大当りを出す", icon: "🎰", check: g => g.jackpots >= 1 },
+      { id: "golden_1", name: "黄金の輝き", desc: "黄金メトロノームを捕獲", icon: "✦", check: g => g.goldenClicks >= 1 },
+      { id: "ascend_1", name: "天界への昇天", desc: "初めて昇天（プレステージ）を行う", icon: "🌌", check: g => g.ascensions >= 1 },
+      { id: "ascend_5", name: "輪廻の調律神", desc: "昇天を5回行う", icon: "👑", check: g => g.ascensions >= 5 }
+    ];
+
+    // --- ゲームステート ---
+    function getDefaultState() {
+      const state = {
+        money: 0,
+        totalEarned: 0,
+        swings: 0,
+        perfects: 0,
+        jackpots: 0,
+        goldenClicks: 0,
+        maxCombo: 0,
+        currentCombo: 0,
+        ascensions: 0,
+        celestialNotes: 0,
+        totalCelestialNotes: 0,
+
+        bpmLevel: 1,
+        unitCount: 1,
+        materialLvl: 0,
+        timingLvl: 0,
+        springLvl: 1,
+
+        autoUnlocked: false,
+        autoCost: 5,
+        fuelLevel: 0,
+
+        slotUnlocked: false,
+        slotJackpotUnlocked: false,
+        boostUnlocked: false,
+        goldenUnlocked: false,
+        goldenLevel: 1,
+        boostDurationExt: 0,
+        diceBonus: false,
+
+        facCounts: {},
+        dragonLvl: 0,
+
+        ascUpgrades: {},
+        unlockedAchieves: {},
+
+        bulkBuyAmount: 1,
+        autoSaveEnabled: true,
+        autoSaveIntervalSec: 5,
+        soundMuted: false,
+        lastSaveTime: Date.now()
+      };
+      if (typeof FACILITIES !== 'undefined') {
+        FACILITIES.forEach(f => { state.facCounts[f.id] = 0; });
+      }
+      if (typeof ASCEND_UPGRADES !== 'undefined') {
+        ASCEND_UPGRADES.forEach(u => { state.ascUpgrades[u.id] = false; });
+      }
+      return state;
+    }
+
+    let G = getDefaultState();
+    FACILITIES.forEach(f => G.facCounts[f.id] = 0);
+    ASCEND_UPGRADES.forEach(u => G.ascUpgrades[u.id] = false);
+
+    let isMoving = false;
+    let isRight = false;
+    let isBoosted = false;
+    let isAuto = false;
+    let isFrenzy = false;
+    let springCharge = 0;
+    let moveTimeout = null;
+    let boostTimer = null;
+    let frenzyTimer = null;
+    let swingStartTime = 0;
+    let lastDuration = 2.0;
+
+    // --- 計算関数群 ---
+    function getBPM() {
+      let bpm = 30 + (G.bpmLevel - 1) * 15;
+      if (G.ascUpgrades.asc_tempo) bpm += 25;
+      let mult = 1.0;
+      if (springCharge > 0) mult *= (1 + (springCharge / 100) * 1.5);
+      if (isBoosted) mult *= 2.5;
+      if (isFrenzy) mult *= 2.0;
+      return Math.min(3000, Math.round(bpm * mult));
+    }
+
+    function getUnitBasePower() {
+      let power = 1.0;
+      FACILITIES.forEach(f => {
+        const count = G.facCounts[f.id] || 0;
+        if (count > 0) {
+          let mMult = 1;
+          if (count >= 25) mMult *= 2;
+          if (count >= 50) mMult *= 2;
+          if (count >= 100) mMult *= 2;
+          if (count >= 150) mMult *= 2;
+          if (count >= 200) mMult *= 2;
+          let fPower = f.power * mMult;
+          if (G.ascUpgrades.asc_mult) fPower *= 2;
+          power += count * fPower;
+        }
+      });
+
+      const mat = MATERIALS[G.materialLvl] || MATERIALS[0];
+      power *= mat.mult;
+
+      if (G.dragonLvl === 1) power *= 1.5;
+      else if (G.dragonLvl === 2) power *= 3.0;
+      else if (G.dragonLvl === 3) power *= 10.0;
+      else if (G.dragonLvl >= 4) power *= 50.0;
+
+      power *= (1 + G.celestialNotes * 0.03);
+      if (G.ascUpgrades.asc_god) power *= 5.0;
+
+      const achCount = Object.keys(G.unlockedAchieves).length;
+      power *= (1 + achCount * 0.015);
+
+      if (isBoosted) power *= 10.0;
+      if (isFrenzy) {
+        let fMult = 10;
+        if (G.goldenLevel === 2) fMult = 77;
+        else if (G.goldenLevel >= 3) fMult = 777;
+        power *= fMult;
+      }
+
+      return Math.max(1, power);
+    }
+
+    function getTotalCPT() {
+      return Math.round(getUnitBasePower() * G.unitCount);
+    }
+
+    function getCPS() {
+      if (!G.autoUnlocked || !isAuto) return 0;
+      const bpm = getBPM();
+      const swingsPerSec = bpm / 60;
+      const costPerSec = G.autoCost * swingsPerSec;
+      return Math.max(0, Math.round(getTotalCPT() * swingsPerSec - costPerSec));
+    }
+
+    function getSpeedCost(lvl = G.bpmLevel) { return Math.round(15 * Math.pow(1.48, lvl - 1)); }
+    function getUnitCost(lvl = G.unitCount) { return Math.round(180 * Math.pow(2.9, lvl - 1)); }
+    function getMaxUnits() { return G.ascUpgrades.asc_units ? 20 : 16; }
+    function getFuelCost(lvl = G.fuelLevel) { return Math.round(80 * Math.pow(2.4, lvl)); }
+    function getTimingCost(lvl = G.timingLvl) { return Math.round(120 * Math.pow(1.9, lvl)); }
+    function getSpringCost(lvl = G.springLvl) { return Math.round(100 * Math.pow(2.1, lvl - 1)); }
+
+    // --- 一括購入（まとめ買い）計算ヘルパー ---
+    function getBulkUpgradeInfo(currentLvl, costFn, maxLvl = null) {
+      const mode = G.bulkBuyAmount || 1;
+      const remaining = (maxLvl !== null) ? (maxLvl - currentLvl) : null;
+      if (remaining !== null && remaining <= 0) {
+        return { qty: 0, cost: 0, canAfford: false, isCapped: true };
+      }
+
+      if (mode === 'max') {
+        let total = 0;
+        let qty = 0;
+        let lvl = currentLvl;
+        const limit = (remaining !== null) ? remaining : 10000;
+        while (qty < limit) {
+          const price = costFn(lvl);
+          if (total + price > G.money) break;
+          total += price;
+          qty++;
+          lvl++;
+        }
+        if (qty === 0) {
+          return { qty: 1, cost: costFn(currentLvl), canAfford: false, isCapped: false };
+        }
+        return { qty, cost: total, canAfford: true, isCapped: false };
+      } else {
+        let num = parseInt(mode, 10) || 1;
+        if (remaining !== null) num = Math.min(num, remaining);
+        if (num <= 0) {
+          return { qty: 0, cost: 0, canAfford: false, isCapped: true };
+        }
+        let total = 0;
+        let lvl = currentLvl;
+        for (let i = 0; i < num; i++) {
+          total += costFn(lvl);
+          lvl++;
+        }
+        return { qty: num, cost: total, canAfford: G.money >= total, isCapped: false };
+      }
+    }
+
+    function getBulkFacilityInfo(f) {
+      const count = G.facCounts[f.id] || 0;
+      const baseCost = f.baseCost;
+      const mode = G.bulkBuyAmount || 1;
+
+      if (mode === 'max') {
+        let total = 0;
+        let qty = 0;
+        let c = count;
+        while (qty < 10000) {
+          const price = Math.round(baseCost * Math.pow(1.15, c));
+          if (total + price > G.money) break;
+          total += price;
+          qty++;
+          c++;
+        }
+        if (qty === 0) {
+          const nextPrice = Math.round(baseCost * Math.pow(1.15, count));
+          return { qty: 1, cost: nextPrice, canAfford: false, isMax: true };
+        }
+        return { qty, cost: total, canAfford: true, isMax: true };
+      } else {
+        const num = parseInt(mode, 10) || 1;
+        let total = 0;
+        let c = count;
+        for (let i = 0; i < num; i++) {
+          total += Math.round(baseCost * Math.pow(1.15, c));
+          c++;
+        }
+        return { qty: num, cost: total, canAfford: G.money >= total, isMax: false };
+      }
+    }
+
+    // --- DOM要素 ---
+    const moneyTxt = document.getElementById('moneyTxt');
+    const powerTxt = document.getElementById('powerTxt');
+    const bpmTxt = document.getElementById('bpmTxt');
+    const unitsTxt = document.getElementById('unitsTxt');
+    const cpsTxt = document.getElementById('cpsTxt');
+    const metroGrid = document.getElementById('metroGrid');
+    const timingBadge = document.getElementById('timingBadge');
+    const boostBtn = document.getElementById('boostBtn');
+    const autoBtn = document.getElementById('autoBtn');
+    const ascendHeaderBtn = document.getElementById('ascendHeaderBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    const springBar = document.getElementById('springBar');
+    const rainbowLayer = document.getElementById('rainbowLayer');
+    const goldenMetro = document.getElementById('goldenMetro');
+    const toastContainer = document.getElementById('toastContainer');
+
+    function updateUI() {
+      moneyTxt.textContent = `${fmt(G.money)} 円`;
+      powerTxt.textContent = `+${fmt(getTotalCPT())}円`;
+      const currentBpm = Math.round(getBPM());
+      bpmTxt.textContent = `BPM ${currentBpm}`;
+      unitsTxt.textContent = `${G.unitCount}台`;
+      cpsTxt.textContent = `${fmt(getCPS())}円/秒`;
+
+      // 工房
+      document.getElementById('currentBpmLabel').textContent = currentBpm;
+      const spInfo = getBulkUpgradeInfo(G.bpmLevel, getSpeedCost);
+      document.getElementById('speedCostTxt').textContent = (G.bulkBuyAmount === 1) ? `${fmt(spInfo.cost)} 円` : `[+${spInfo.qty}個] ${fmt(spInfo.cost)} 円`;
+      document.getElementById('speedLvlTxt').textContent = `Lv.${G.bpmLevel}`;
+      document.getElementById('btnSpeedUp').disabled = !spInfo.canAfford;
+
+      const maxU = getMaxUnits();
+      const uInfo = getBulkUpgradeInfo(G.unitCount, getUnitCost, maxU);
+      if (uInfo.isCapped || G.unitCount >= maxU) {
+        document.getElementById('unitCostTxt').textContent = 'MAX';
+        document.getElementById('unitCountTxt').textContent = `${maxU}/${maxU}`;
+        document.getElementById('btnAddUnit').disabled = true;
+      } else {
+        document.getElementById('unitCostTxt').textContent = (G.bulkBuyAmount === 1) ? `${fmt(uInfo.cost)} 円` : `[+${uInfo.qty}台] ${fmt(uInfo.cost)} 円`;
+        document.getElementById('unitCountTxt').textContent = `${G.unitCount}/${maxU}`;
+        document.getElementById('btnAddUnit').disabled = !uInfo.canAfford;
+      }
+
+      const nextMatIdx = G.materialLvl + 1;
+      if (nextMatIdx < MATERIALS.length) {
+        const nextMat = MATERIALS[nextMatIdx];
+        document.getElementById('matNextName').textContent = `${nextMat.name}振り子の錬成`;
+        document.getElementById('matCostTxt').textContent = `${fmt(nextMat.cost)} 円`;
+        document.getElementById('matNextMult').textContent = `x${nextMat.mult}`;
+        document.getElementById('matCurrentTxt').textContent = MATERIALS[G.materialLvl].name;
+        document.getElementById('btnMaterial').disabled = (G.money < nextMat.cost);
+      } else {
+        document.getElementById('matNextName').textContent = `最高位の振り子錬成完了`;
+        document.getElementById('matCostTxt').textContent = `MAX`;
+        document.getElementById('matNextMult').textContent = `x1000`;
+        document.getElementById('matCurrentTxt').textContent = `超弦光糸`;
+        document.getElementById('btnMaterial').disabled = true;
+      }
+
+      if (G.autoUnlocked) {
+        document.getElementById('unlockAutoStatus').textContent = '解放済';
+        document.getElementById('unlockAutoCostTxt').textContent = '解放完了';
+        document.getElementById('btnUnlockAuto').disabled = true;
+        autoBtn.classList.add('unlocked');
+        autoBtn.disabled = false;
+        autoBtn.textContent = `⚡ AUTO [${isAuto ? 'ON' : 'OFF'}] (${G.autoCost}円)`;
+      } else {
+        document.getElementById('unlockAutoStatus').textContent = '未解放';
+        document.getElementById('unlockAutoCostTxt').textContent = '250 円';
+        document.getElementById('btnUnlockAuto').disabled = (G.money < 250);
+        autoBtn.classList.remove('unlocked');
+        autoBtn.disabled = true;
+        autoBtn.textContent = `🔒 AUTO [未解放]`;
+      }
+
+      document.getElementById('fuelCostLabel').textContent = G.autoCost;
+      if (G.autoCost <= 0 || G.fuelLevel >= 5) {
+        document.getElementById('fuelCostTxt').textContent = '無料化達成';
+        document.getElementById('fuelLvlTxt').textContent = 'MAX';
+        document.getElementById('btnSaveAuto').disabled = true;
+      } else {
+        const fInfo = getBulkUpgradeInfo(G.fuelLevel, getFuelCost, 5);
+        document.getElementById('fuelCostTxt').textContent = (G.bulkBuyAmount === 1) ? `${fmt(fInfo.cost)} 円` : `[+${fInfo.qty}個] ${fmt(fInfo.cost)} 円`;
+        document.getElementById('fuelLvlTxt').textContent = `Lv.${G.fuelLevel}`;
+        document.getElementById('btnSaveAuto').disabled = !fInfo.canAfford;
+      }
+
+      const tInfo = getBulkUpgradeInfo(G.timingLvl, getTimingCost);
+      const perfMultDisplay = (2.0 + G.timingLvl * 0.5).toFixed(1);
+      document.getElementById('timingCostTxt').textContent = (G.bulkBuyAmount === 1) ? `${fmt(tInfo.cost)} 円` : `[+${tInfo.qty}個] ${fmt(tInfo.cost)} 円`;
+      document.getElementById('timingLvlTxt').textContent = `x${perfMultDisplay}`;
+      document.getElementById('btnTimingUp').disabled = !tInfo.canAfford;
+
+      const spgInfo = getBulkUpgradeInfo(G.springLvl, getSpringCost);
+      document.getElementById('springCostTxt').textContent = (G.bulkBuyAmount === 1) ? `${fmt(spgInfo.cost)} 円` : `[+${spgInfo.qty}個] ${fmt(spgInfo.cost)} 円`;
+      document.getElementById('springLvlTxt').textContent = `Lv.${G.springLvl}`;
+      document.getElementById('btnSpringUp').disabled = !spgInfo.canAfford;
+
+      if (G.boostUnlocked) {
+        const boostCost = Math.max(100, Math.floor(getTotalCPT() * 15));
+        if (!isBoosted) {
+          boostBtn.disabled = (G.money < boostCost);
+          boostBtn.textContent = `確変ブースト (${fmt(boostCost)}円)`;
+        }
+      } else {
+        boostBtn.disabled = true;
+        boostBtn.textContent = `🔒 確変ブースト`;
+      }
+
+      updateCasinoUI();
+      updateFacUI();
+      updateDragonUI();
+      updateAscendUI();
+      updateAchieveUI();
+    }
+
+    function updateCasinoUI() {
+      document.getElementById('slotStatus').textContent = G.slotUnlocked ? '解放済' : '未解放';
+      document.getElementById('slotCostTxt').textContent = G.slotUnlocked ? '解放完了' : '500 円';
+      document.getElementById('btnUnlockSlot').disabled = (G.slotUnlocked || G.money < 500);
+
+      document.getElementById('jackpotStatus').textContent = G.slotJackpotUnlocked ? '解放済' : '未解放';
+      document.getElementById('jackpotCostTxt').textContent = G.slotJackpotUnlocked ? '解放完了' : '4,000 円';
+      document.getElementById('btnUnlockJackpot').disabled = (!G.slotUnlocked || G.slotJackpotUnlocked || G.money < 4000);
+
+      document.getElementById('boostUnlockStatus').textContent = G.boostUnlocked ? '解放済' : '未解放';
+      document.getElementById('boostUnlockCostTxt').textContent = G.boostUnlocked ? '解放完了' : '2,000 円';
+      document.getElementById('btnUnlockBoost').disabled = (G.boostUnlocked || G.money < 2000);
+
+      document.getElementById('goldenStatus').textContent = G.goldenUnlocked ? '解放済' : '未解放';
+      document.getElementById('goldenCostTxt').textContent = G.goldenUnlocked ? '解放完了' : '2,500 円';
+      document.getElementById('btnUnlockGolden').disabled = (G.goldenUnlocked || G.money < 2500);
+
+      if (G.goldenLevel === 1) {
+        document.getElementById('goldenUpLvlTxt').textContent = '10倍';
+        document.getElementById('goldenUpCostTxt').textContent = '80,000 円';
+        document.getElementById('btnGoldenUp').disabled = (!G.goldenUnlocked || G.money < 80000);
+      } else if (G.goldenLevel === 2) {
+        document.getElementById('goldenUpLvlTxt').textContent = '77倍';
+        document.getElementById('goldenUpCostTxt').textContent = '3,000,000 円';
+        document.getElementById('btnGoldenUp').disabled = (!G.goldenUnlocked || G.money < 3000000);
+      } else {
+        document.getElementById('goldenUpLvlTxt').textContent = '777倍(MAX)';
+        document.getElementById('goldenUpCostTxt').textContent = 'MAX';
+        document.getElementById('btnGoldenUp').disabled = true;
+      }
+
+      const bExtCost = Math.round(15000 * Math.pow(2.5, G.boostDurationExt / 2));
+      document.getElementById('boostExtLvlTxt').textContent = `+${G.boostDurationExt}秒`;
+      if (G.boostDurationExt >= 10) {
+        document.getElementById('boostExtCostTxt').textContent = 'MAX';
+        document.getElementById('btnBoostExt').disabled = true;
+      } else {
+        document.getElementById('boostExtCostTxt').textContent = `${fmt(bExtCost)} 円`;
+        document.getElementById('btnBoostExt').disabled = (!G.boostUnlocked || G.money < bExtCost);
+      }
+
+      document.getElementById('diceStatus').textContent = G.diceBonus ? '購入済' : '未購入';
+      document.getElementById('diceCostTxt').textContent = G.diceBonus ? '購入完了' : '50,000,000 円';
+      document.getElementById('btnDiceBonus').disabled = (G.diceBonus || G.money < 50e6);
+    }
+
+    function updateDragonUI() {
+      const stage = DRAGON_STAGES[G.dragonLvl] || DRAGON_STAGES[0];
+      document.getElementById('dragonAvatar').textContent = stage.avatar;
+      document.getElementById('dragonTitle').textContent = stage.name;
+      document.getElementById('dragonDesc').textContent = stage.desc;
+      document.getElementById('dragonBuff').textContent = stage.buff;
+
+      const btn = document.getElementById('dragonUpgradeBtn');
+      if (stage.cost === Infinity) {
+        btn.textContent = '最終覚醒完了';
+        btn.disabled = true;
+      } else {
+        btn.textContent = `${stage.action} (${fmt(stage.cost)}円)`;
+        btn.disabled = (G.money < stage.cost);
+      }
+    }
+
+    function updateAscendUI() {
+      const totalGain = Math.floor(Math.sqrt(Math.max(0, G.totalEarned) / 1e7));
+      const availNotes = Math.max(0, totalGain - G.totalCelestialNotes);
+
+      document.getElementById('availNotesTxt').textContent = availNotes;
+      document.getElementById('currentNotesTxt').textContent = G.celestialNotes;
+      document.getElementById('notesBuffTxt').textContent = `+${(G.celestialNotes * 3).toFixed(0)}%`;
+      document.getElementById('gainNotesTxt').textContent = availNotes;
+
+      const canAscend = (G.totalEarned >= 5e7 && availNotes > 0);
+      ascendHeaderBtn.style.display = canAscend ? 'inline-flex' : 'none';
+      document.getElementById('doAscendBtn').disabled = !canAscend;
+
+      ASCEND_UPGRADES.forEach(u => {
+        const btn = document.getElementById(`asc_${u.id}`);
+        if (btn) {
+          const owned = !!G.ascUpgrades[u.id];
+          btn.disabled = (owned || G.celestialNotes < u.cost);
+          const st = btn.querySelector('.shop-level');
+          if (st) st.textContent = owned ? '習得済' : `${u.cost}音符`;
+        }
+      });
+    }
+
+    function updateAchieveUI() {
+      document.getElementById('stEarned').textContent = `${fmt(G.totalEarned)}円`;
+      document.getElementById('stSwings').textContent = `${G.swings}回`;
+      document.getElementById('stPerfects').textContent = `${G.perfects}回`;
+      document.getElementById('stMaxCombo').textContent = `${G.maxCombo}連続`;
+      document.getElementById('stJackpots').textContent = `${G.jackpots}回`;
+      document.getElementById('stGolden').textContent = `${G.goldenClicks}回`;
+      document.getElementById('stAscensions').textContent = `${G.ascensions}回`;
+
+      const unlockedCount = Object.keys(G.unlockedAchieves).length;
+      document.getElementById('stAchieves').textContent = `${unlockedCount} / ${ACHIEVEMENTS.length}`;
+      document.getElementById('achieveBuffTxt').textContent = `+${(unlockedCount * 1.5).toFixed(1)}% 全生産ボーナス`;
+
+      ACHIEVEMENTS.forEach(a => {
+        const card = document.getElementById(`ach_${a.id}`);
+        if (card && G.unlockedAchieves[a.id]) {
+          card.classList.add('unlocked');
+        }
+      });
+    }
+
+    function rebuildMetroUnits() {
+      metroGrid.innerHTML = '';
+      metroGrid.className = `metro-grid count-${G.unitCount} mat-${G.materialLvl}`;
+
+      for (let i = 0; i < G.unitCount; i++) {
+        const unit = document.createElement('div');
+        unit.className = `metronome-unit mat-${G.materialLvl}`;
+        unit.innerHTML = `
+          <div class="case"></div>
+          <div class="scale-plate">
+            <div class="target-zone target-left"></div>
+            <div class="target-zone target-right"></div>
+          </div>
+          <div class="rod"><div class="weight"></div></div>
+          <div class="pivot"></div>
+        `;
+        metroGrid.appendChild(unit);
+      }
+    }
+
+    function executeSwing(isAutoTrigger = false, clientX = null, clientY = null) {
+      if (isMoving) return;
+
+      if (isAutoTrigger) {
+        if (G.autoCost > 0) {
+          if (G.money < G.autoCost) {
+            isAuto = false;
+            autoBtn.classList.remove('active');
+            timingBadge.innerHTML = `<span style="color:#ff5252; font-size:0.85rem;">燃料切れ！AUTO停止</span>`;
+            showToast('⚠️ 燃料切れのためAUTOが停止しました');
+            updateUI();
+            return;
+          }
+          G.money -= G.autoCost;
+        }
+      }
+
+      isMoving = true;
+      G.swings++;
+      isRight = !isRight;
+
+      const bpm = getBPM();
+      const duration = 60 / bpm;
+
+      playTickSound(isRight, Math.min(800, G.bpmLevel * 15));
+
+      const rods = metroGrid.querySelectorAll('.rod');
+      rods.forEach((r, idx) => {
+        r.style.transition = `transform ${duration}s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 0.01}s`;
+        r.classList.toggle('right', isRight);
+      });
+
+      const targets = metroGrid.querySelectorAll(isRight ? '.target-right' : '.target-left');
+      targets.forEach(t => {
+        t.classList.add('active');
+        setTimeout(() => t.classList.remove('active'), Math.min(250, duration * 400));
+      });
+
+      let mult = 1.0;
+      if (!isAutoTrigger) {
+        const now = performance.now();
+        const elapsed = (now - swingStartTime) / 1000;
+        const ratio = (elapsed % lastDuration) / lastDuration;
+
+        if (ratio <= 0.24 || ratio >= 0.76 || G.swings <= 1) {
+          G.perfects++;
+          G.currentCombo++;
+          if (G.currentCombo > G.maxCombo) G.maxCombo = G.currentCombo;
+
+          const maxC = G.ascUpgrades.asc_combo ? 50 : 20;
+          const effC = Math.min(maxC, G.currentCombo);
+          const comboRate = G.ascUpgrades.asc_combo ? 0.25 : 0.15;
+          let basePerf = 2.0 + G.timingLvl * 0.5;
+          if (G.dragonLvl >= 4) basePerf *= 2.0;
+
+          mult = basePerf * (1 + effC * comboRate);
+          playPerfectChime();
+
+          timingBadge.innerHTML = `
+            <span style="color:#00e5ff; font-weight:900;">🎯 PERFECT!! x${mult.toFixed(1)}</span>
+            <span class="combo-pill">COMBO ${G.currentCombo}</span>
+          `;
+        } else {
+          G.currentCombo = 0;
+          timingBadge.innerHTML = `<span style="color:#8899bb;">HIT (リズムずれ)</span>`;
+        }
+      }
+
+      swingStartTime = performance.now();
+      lastDuration = duration;
+
+      const earn = Math.round(getTotalCPT() * mult);
+      G.money += earn;
+      G.totalEarned += earn;
+
+      if (G.slotUnlocked) {
+        let diceMult = G.diceBonus ? 2 : 1;
+        let jpChance = G.slotJackpotUnlocked ? 0.01 : 0;
+        if (G.dragonLvl >= 4) jpChance += 0.03;
+
+        if (Math.random() < jpChance) {
+          G.jackpots++;
+          const jVal = earn * 35 * diceMult;
+          G.money += jVal;
+          G.totalEarned += jVal;
+          playKyuinSound();
+          showJackpotPopup('🎰 777 大当り!! 🎰', `+${fmt(jVal)} 円 GET!!`);
+          if (G.boostUnlocked && !isBoosted && Math.random() < 0.35) {
+            setTimeout(triggerBoost, 400);
+          }
+        } else if (Math.random() < 0.02) {
+          const bVal = earn * 5 * diceMult;
+          G.money += bVal;
+          G.totalEarned += bVal;
+          playTickSound(true, 400);
+          showJackpotPopup('🔔 ラッキーベル!! 🔔', `+${fmt(bVal)} 円 GET!`);
+        }
+      }
+
+      if (!isAutoTrigger && G.dragonLvl >= 2 && Math.random() < 0.008) {
+        triggerDragonRoar();
+      }
+
+      if (clientX && clientY) {
+        spawnFloatText(`+${fmt(earn)}`, clientX, clientY);
+      }
+
+      moneyTxt.classList.add('bump');
+      setTimeout(() => moneyTxt.classList.remove('bump'), 60);
+
+      updateUI();
+
+      clearTimeout(moveTimeout);
+      moveTimeout = setTimeout(() => {
+        isMoving = false;
+        if (isAuto) executeSwing(true);
+      }, duration * 1000);
+    }
+
+    function triggerDragonRoar() {
+      playRoarSound();
+      const stage = document.getElementById('stage');
+      stage.style.animation = 'shakeStage 0.5s';
+      setTimeout(() => stage.style.animation = '', 500);
+
+      const roarEarn = getTotalCPT() * 25;
+      G.money += roarEarn;
+      G.totalEarned += roarEarn;
+
+      const banner = document.getElementById('dragonRoarBanner');
+      document.getElementById('dragonRoarTxt').textContent = `+${fmt(roarEarn)} 円 炸裂!!`;
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 1500);
+    }
+
+    const metroClickArea = document.getElementById('metroClickArea');
+    metroClickArea.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      executeSwing(false, e.clientX, e.clientY);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        const rect = metroClickArea.getBoundingClientRect();
+        executeSwing(false, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }
+    });
+
+    const springBtn = document.getElementById('springBtn');
+    springBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const add = 20 * (G.ascUpgrades.asc_spring ? 2 : 1);
+      springCharge = Math.min(100, springCharge + add);
+      springBar.style.width = `${springCharge}%`;
+      playTickSound(true, 500);
+    });
+
+    setInterval(() => {
+      const minCharge = G.ascUpgrades.asc_spring ? 50 : 0;
+      const decay = Math.max(1, 4 - G.springLvl * 0.3) * (G.ascUpgrades.asc_spring ? 0.5 : 1);
+      if (springCharge > minCharge) {
+        springCharge = Math.max(minCharge, springCharge - decay);
+      } else if (springCharge < minCharge) {
+        springCharge = minCharge;
+      }
+      springBar.style.width = `${springCharge}%`;
+    }, 150);
+
+    autoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!G.autoUnlocked) return;
+      isAuto = !isAuto;
+      autoBtn.classList.toggle('active', isAuto);
+      if (isAuto && !isMoving) executeSwing(true);
+      updateUI();
+    });
+
+    muteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      G.soundMuted = !G.soundMuted;
+      muteBtn.textContent = G.soundMuted ? '🔇' : '🔊';
+      showToast(G.soundMuted ? '効果音をミュートしました' : '効果音をONにしました');
+    });
+
+    document.getElementById('btnSpeedUp').addEventListener('click', () => {
+      const info = getBulkUpgradeInfo(G.bpmLevel, getSpeedCost);
+      if (!info.canAfford || G.money < info.cost || info.qty <= 0) return;
+      G.money -= info.cost;
+      G.bpmLevel += info.qty;
+      playTickSound(true, 300);
+      updateUI();
+    });
+
+    document.getElementById('btnAddUnit').addEventListener('click', () => {
+      const maxU = getMaxUnits();
+      const info = getBulkUpgradeInfo(G.unitCount, getUnitCost, maxU);
+      if (!info.canAfford || G.money < info.cost || info.qty <= 0 || info.isCapped) return;
+      G.money -= info.cost;
+      G.unitCount += info.qty;
+      rebuildMetroUnits();
+      playKyuinSound();
+      updateUI();
+    });
+
+    document.getElementById('btnMaterial').addEventListener('click', () => {
+      const nextIdx = G.materialLvl + 1;
+      if (nextIdx >= MATERIALS.length) return;
+      const mat = MATERIALS[nextIdx];
+      if (G.money < mat.cost) return;
+      G.money -= mat.cost;
+      G.materialLvl = nextIdx;
+      rebuildMetroUnits();
+      playKyuinSound();
+      showToast(`🔨 振り子を【${mat.name}】に錬成！`);
+      updateUI();
+    });
+
+    document.getElementById('btnUnlockAuto').addEventListener('click', () => {
+      if (G.money < 250 || G.autoUnlocked) return;
+      G.money -= 250;
+      G.autoUnlocked = true;
+      playKyuinSound();
+      showToast('⚙️ 自動往復機構(AUTO)を解放しました！');
+      updateUI();
+    });
+
+    document.getElementById('btnSaveAuto').addEventListener('click', () => {
+      if (G.autoCost <= 0 || G.fuelLevel >= 5) return;
+      const info = getBulkUpgradeInfo(G.fuelLevel, getFuelCost, 5);
+      if (!info.canAfford || G.money < info.cost || info.qty <= 0 || info.isCapped) return;
+      G.money -= info.cost;
+      G.fuelLevel += info.qty;
+      G.autoCost = Math.max(0, 5 - G.fuelLevel);
+      playTickSound(true, 250);
+      updateUI();
+    });
+
+    document.getElementById('btnTimingUp').addEventListener('click', () => {
+      const info = getBulkUpgradeInfo(G.timingLvl, getTimingCost);
+      if (!info.canAfford || G.money < info.cost || info.qty <= 0) return;
+      G.money -= info.cost;
+      G.timingLvl += info.qty;
+      playTickSound(true, 350);
+      updateUI();
+    });
+
+    document.getElementById('btnSpringUp').addEventListener('click', () => {
+      const info = getBulkUpgradeInfo(G.springLvl, getSpringCost);
+      if (!info.canAfford || G.money < info.cost || info.qty <= 0) return;
+      G.money -= info.cost;
+      G.springLvl += info.qty;
+      playTickSound(true, 250);
+      updateUI();
+    });
+
+    document.getElementById('btnUnlockSlot').addEventListener('click', () => {
+      if (G.money < 500 || G.slotUnlocked) return;
+      G.money -= 500;
+      G.slotUnlocked = true;
+      playKyuinSound();
+      showToast('🎰 幸運のベル(スロット機能)を解放！');
+      updateUI();
+    });
+
+    document.getElementById('btnUnlockJackpot').addEventListener('click', () => {
+      if (G.money < 4000 || G.slotJackpotUnlocked || !G.slotUnlocked) return;
+      G.money -= 4000;
+      G.slotJackpotUnlocked = true;
+      playKyuinSound();
+      showToast('🎰 777 大当り機構を解放！');
+      updateUI();
+    });
+
+    document.getElementById('btnUnlockBoost').addEventListener('click', () => {
+      if (G.money < 2000 || G.boostUnlocked) return;
+      G.money -= 2000;
+      G.boostUnlocked = true;
+      playKyuinSound();
+      showToast('⚡ 確変オーバードライブを解放！');
+      updateUI();
+    });
+
+    document.getElementById('btnUnlockGolden').addEventListener('click', () => {
+      if (G.money < 2500 || G.goldenUnlocked) return;
+      G.money -= 2500;
+      G.goldenUnlocked = true;
+      playKyuinSound();
+      showToast('✦ 黄金の調律音叉を解放！ステージに黄金メトロノームが飛来します');
+      updateUI();
+    });
+
+    document.getElementById('btnGoldenUp').addEventListener('click', () => {
+      if (G.goldenLevel === 1 && G.money >= 80000) {
+        G.money -= 80000;
+        G.goldenLevel = 2;
+        playKyuinSound();
+        showToast('✨ 黄金フィーバーが77倍に強化！');
+      } else if (G.goldenLevel === 2 && G.money >= 3000000) {
+        G.money -= 3000000;
+        G.goldenLevel = 3;
+        playKyuinSound();
+        showToast('✨ 黄金狂乱が極限777倍に強化！');
+      }
+      updateUI();
+    });
+
+    document.getElementById('btnBoostExt').addEventListener('click', () => {
+      const cost = Math.round(15000 * Math.pow(2.5, G.boostDurationExt / 2));
+      if (G.money < cost || G.boostDurationExt >= 10) return;
+      G.money -= cost;
+      G.boostDurationExt += 2;
+      playTickSound(true, 300);
+      updateUI();
+    });
+
+    document.getElementById('btnDiceBonus').addEventListener('click', () => {
+      if (G.money < 50e6 || G.diceBonus) return;
+      G.money -= 50e6;
+      G.diceBonus = true;
+      playKyuinSound();
+      showToast('🎲 豪運の黄金ダイス獲得！全スロット賞金が2倍！');
+      updateUI();
+    });
+
+    document.getElementById('dragonUpgradeBtn').addEventListener('click', () => {
+      const stage = DRAGON_STAGES[G.dragonLvl];
+      if (!stage || G.money < stage.cost || stage.cost === Infinity) return;
+      G.money -= stage.cost;
+      G.dragonLvl++;
+      playKyuinSound();
+      showToast(`🐉 守護龍が【${DRAGON_STAGES[G.dragonLvl].name}】へ進化！`);
+      updateUI();
+    });
+
+    const facList = document.getElementById('facList');
+    function renderFac() {
+      facList.innerHTML = '';
+      FACILITIES.forEach(f => {
+        const card = document.createElement('button');
+        card.className = 'shop-card';
+        card.id = `fac_${f.id}`;
+        card.addEventListener('click', () => {
+          const info = getBulkFacilityInfo(f);
+          if (!info.canAfford || G.money < info.cost || info.qty <= 0) return;
+          G.money -= info.cost;
+          G.facCounts[f.id] = (G.facCounts[f.id] || 0) + info.qty;
+          playTickSound(true, 400);
+          updateUI();
+        });
+
+        card.innerHTML = `
+          <div class="shop-card-left">
+            <div class="shop-icon">${f.icon}</div>
+            <div class="shop-details">
+              <span class="shop-name">${f.name}</span>
+              <span class="shop-cost" id="fcost_${f.id}">0 円</span>
+              <span class="shop-effect">${f.desc} (全台 +${fmt(f.power)}円/振り)</span>
+            </div>
+          </div>
+          <div class="shop-level" id="fcount_${f.id}">0</div>
+        `;
+        facList.appendChild(card);
+      });
+    }
+
+    function updateFacUI() {
+      FACILITIES.forEach(f => {
+        const card = document.getElementById(`fac_${f.id}`);
+        if (!card) return;
+        const count = G.facCounts[f.id] || 0;
+        const info = getBulkFacilityInfo(f);
+        card.disabled = !info.canAfford;
+
+        const costLabel = (G.bulkBuyAmount === 1)
+          ? `${fmt(info.cost)} 円`
+          : `[+${info.qty}個] ${fmt(info.cost)} 円`;
+        document.getElementById(`fcost_${f.id}`).textContent = costLabel;
+        document.getElementById(`fcount_${f.id}`).textContent = count;
+      });
+    }
+
+    function triggerBoost() {
+      if (isBoosted) return;
+      isBoosted = true;
+      boostBtn.classList.add('active');
+      boostBtn.textContent = '確変発動中!!';
+      rainbowLayer.classList.add('active');
+      playKyuinSound();
+
+      const durationSec = 10 + G.boostDurationExt + (G.dragonLvl >= 3 ? 5 : 0);
+
+      clearTimeout(boostTimer);
+      boostTimer = setTimeout(() => {
+        isBoosted = false;
+        boostBtn.classList.remove('active');
+        rainbowLayer.classList.remove('active');
+        updateUI();
+      }, durationSec * 1000);
+
+      updateUI();
+    }
+
+    boostBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!G.boostUnlocked || isBoosted) return;
+      const cost = Math.max(100, Math.floor(getTotalCPT() * 15));
+      if (G.money < cost) return;
+      G.money -= cost;
+      triggerBoost();
+    });
+
+    function spawnGolden() {
+      if (!G.goldenUnlocked) return;
+      const stageRect = document.getElementById('stage').getBoundingClientRect();
+      const x = 20 + Math.random() * (stageRect.width - 100);
+      const y = 80 + Math.random() * (stageRect.height - 200);
+      goldenMetro.style.left = `${x}px`;
+      goldenMetro.style.top = `${y}px`;
+      goldenMetro.style.display = 'block';
+      setTimeout(() => { goldenMetro.style.display = 'none'; }, 10000);
+    }
+
+    goldenMetro.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      goldenMetro.style.display = 'none';
+      G.goldenClicks++;
+      playKyuinSound();
+
+      let fMult = 10;
+      if (G.goldenLevel === 2) fMult = 77;
+      else if (G.goldenLevel >= 3) fMult = 777;
+
+      isFrenzy = true;
+      showJackpotPopup('✦ 黄金の狂乱!! ✦', `15秒間 報酬${fMult}倍 ＆ 猛烈加速!!`);
+
+      const frenzySec = 15 + (G.ascUpgrades.asc_golden ? 10 : 0);
+
+      clearTimeout(frenzyTimer);
+      frenzyTimer = setTimeout(() => {
+        isFrenzy = false;
+        updateUI();
+      }, frenzySec * 1000);
+
+      updateUI();
+    });
+
+    setInterval(() => {
+      const intervalRate = (G.dragonLvl >= 3 || G.ascUpgrades.asc_golden) ? 0.6 : 0.3;
+      if (Math.random() < intervalRate) spawnGolden();
+    }, 45000);
+
+    const ascendModal = document.getElementById('ascendModal');
+    const modalGainNotes = document.getElementById('modalGainNotes');
+
+    function openAscendModal() {
+      const totalGain = Math.floor(Math.sqrt(Math.max(0, G.totalEarned) / 1e7));
+      const avail = Math.max(0, totalGain - G.totalCelestialNotes);
+      modalGainNotes.textContent = avail;
+      ascendModal.classList.add('show');
+    }
+
+    ascendHeaderBtn.addEventListener('click', openAscendModal);
+    document.getElementById('doAscendBtn').addEventListener('click', openAscendModal);
+    document.getElementById('modalAscendCancelBtn').addEventListener('click', () => {
+      ascendModal.classList.remove('show');
+    });
+
+    document.getElementById('modalAscendConfirmBtn').addEventListener('click', () => {
+      ascendModal.classList.remove('show');
+      const totalGain = Math.floor(Math.sqrt(Math.max(0, G.totalEarned) / 1e7));
+      const avail = Math.max(0, totalGain - G.totalCelestialNotes);
+      if (avail <= 0) return;
+
+      G.ascensions++;
+      G.celestialNotes += avail;
+      G.totalCelestialNotes += avail;
+
+      G.money = 0;
+      G.bpmLevel = 1;
+      G.unitCount = 1;
+      G.materialLvl = 0;
+      G.timingLvl = 0;
+      G.springLvl = 1;
+      G.currentCombo = 0;
+
+      if (G.ascUpgrades.asc_auto) {
+        G.autoUnlocked = true;
+        G.autoCost = 0;
+        G.fuelLevel = 5;
+      } else {
+        G.autoUnlocked = false;
+        G.autoCost = 5;
+        G.fuelLevel = 0;
+      }
+
+      G.slotUnlocked = false;
+      G.slotJackpotUnlocked = false;
+      G.boostUnlocked = false;
+      G.goldenUnlocked = false;
+      G.goldenLevel = 1;
+      G.boostDurationExt = 0;
+      G.diceBonus = false;
+      G.dragonLvl = 0;
+
+      FACILITIES.forEach(f => G.facCounts[f.id] = 0);
+
+      isMoving = false;
+      isAuto = false;
+      autoBtn.classList.remove('active');
+      isBoosted = false;
+      boostBtn.classList.remove('active');
+      rainbowLayer.classList.remove('active');
+
+      rebuildMetroUnits();
+      playKyuinSound();
+      showToast(`🌌 昇天完了！【天上の音符 +${avail}個】を獲得しました！`);
+      saveGame();
+      updateUI();
+    });
+
+    const ascendTreeList = document.getElementById('ascendTreeList');
+    function renderAscendTree() {
+      ascendTreeList.innerHTML = '';
+      ASCEND_UPGRADES.forEach(u => {
+        const card = document.createElement('button');
+        card.className = 'shop-card';
+        card.id = `asc_${u.id}`;
+        card.addEventListener('click', () => {
+          if (G.ascUpgrades[u.id] || G.celestialNotes < u.cost) return;
+          G.celestialNotes -= u.cost;
+          G.ascUpgrades[u.id] = true;
+          playKyuinSound();
+          showToast(`🌌 天界スキル【${u.name}】を習得！`);
+          updateUI();
+        });
+
+        card.innerHTML = `
+          <div class="shop-card-left">
+            <div class="shop-icon">🌌</div>
+            <div class="shop-details">
+              <span class="shop-name">${u.name}</span>
+              <span class="shop-cost">${u.cost} 天上の音符</span>
+              <span class="shop-effect">${u.desc}</span>
+            </div>
+          </div>
+          <div class="shop-level">未習得</div>
+        `;
+        ascendTreeList.appendChild(card);
+      });
+    }
+
+    const achieveGrid = document.getElementById('achieveGrid');
+    function renderAchieves() {
+      achieveGrid.innerHTML = '';
+      ACHIEVEMENTS.forEach(a => {
+        const card = document.createElement('div');
+        card.className = `achieve-card ${G.unlockedAchieves[a.id] ? 'unlocked' : ''}`;
+        card.id = `ach_${a.id}`;
+        card.innerHTML = `
+          <div class="achieve-card-icon">${a.icon}</div>
+          <div class="achieve-card-title">${a.name}</div>
+          <div class="achieve-card-desc">${a.desc}</div>
+        `;
+        achieveGrid.appendChild(card);
+      });
+    }
+
+    function checkAchievements() {
+      let newlyUnlocked = false;
+      ACHIEVEMENTS.forEach(a => {
+        if (!G.unlockedAchieves[a.id] && a.check(G)) {
+          G.unlockedAchieves[a.id] = true;
+          newlyUnlocked = true;
+          playPerfectChime();
+          showToast(`🏆 実実績解除: 【${a.name}】`);
+        }
+      });
+      if (newlyUnlocked) updateUI();
+    }
+    setInterval(checkAchievements, 1200);
+
+    function checkOfflineEarnings() {
+      const now = Date.now();
+      const last = G.lastSaveTime || now;
+      const diffSec = Math.min(28800, (now - last) / 1000);
+
+      if (diffSec >= 20 && G.autoUnlocked) {
+        const cps = getCPS();
+        if (cps > 0) {
+          const offlineRate = G.ascUpgrades.asc_auto ? 1.0 : 0.6;
+          const earn = Math.round(cps * diffSec * offlineRate);
+          if (earn > 0) {
+            G.money += earn;
+            G.totalEarned += earn;
+            document.getElementById('offlineTimeTxt').textContent =
+              `離れていた時間: 約${Math.floor(diffSec / 60)}分間 (効率: ${Math.round(offlineRate * 100)}%)`;
+            document.getElementById('offlineEarnedTxt').textContent = `+${fmt(earn)} 円`;
+            document.getElementById('offlineModal').classList.add('show');
+          }
+        }
+      }
+      G.lastSaveTime = now;
+    }
+
+    document.getElementById('offlineOkBtn').addEventListener('click', () => {
+      document.getElementById('offlineModal').classList.remove('show');
+      updateUI();
+    });
+
+    const SAVE_KEY = 'metronome_ultra_save_v3';
+    let autoSaveTimerId = null;
+    let lastSaveTimestamp = Date.now();
+    const autoSaveIndicator = document.getElementById('autoSaveIndicator');
+    const autoSaveIndicatorTxt = document.getElementById('autoSaveIndicatorTxt');
+    let indicatorHideTimeout = null;
+
+    function triggerSaveIndicator(msg = 'オートセーブ完了') {
+      if (!autoSaveIndicator) return;
+      autoSaveIndicatorTxt.textContent = msg;
+      autoSaveIndicator.classList.remove('spin');
+      void autoSaveIndicator.offsetWidth;
+      autoSaveIndicator.classList.add('show', 'spin');
+
+      clearTimeout(indicatorHideTimeout);
+      indicatorHideTimeout = setTimeout(() => {
+        autoSaveIndicator.classList.remove('show');
+      }, 1500);
+    }
+
+    let isResetting = false;
+
+    function saveGame(showIndicator = true, isManual = false) {
+      if (isResetting) return;
+      G.lastSaveTime = Date.now();
+      lastSaveTimestamp = Date.now();
+      try {
+        const json = JSON.stringify(G);
+        localStorage.setItem(SAVE_KEY, json);
+
+        const bytes = new Blob([json]).size;
+        const sizeEl = document.getElementById('saveDataSizeTxt');
+        if (sizeEl) sizeEl.textContent = `${(bytes / 1024).toFixed(2)} KB`;
+
+        if (showIndicator) {
+          triggerSaveIndicator(isManual ? '手動保存完了' : 'オートセーブ完了');
+        }
+      } catch(e) {
+        console.error('Save failed:', e);
+        showToast('⚠️ セーブに失敗しました。ブラウザの容量上限の可能性があります。');
+      }
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          G = Object.assign(getDefaultState(), data);
+          FACILITIES.forEach(f => {
+            if (G.facCounts[f.id] === undefined) G.facCounts[f.id] = 0;
+          });
+          ASCEND_UPGRADES.forEach(u => {
+            if (G.ascUpgrades[u.id] === undefined) G.ascUpgrades[u.id] = false;
+          });
+          if (!G.bulkBuyAmount) G.bulkBuyAmount = 1;
+        }
+      } catch(e) {}
+    }
+
+    function restartAutoSaveTimer() {
+      clearInterval(autoSaveTimerId);
+      if (G.autoSaveEnabled) {
+        const ms = Math.max(1, G.autoSaveIntervalSec || 5) * 1000;
+        autoSaveTimerId = setInterval(() => {
+          saveGame(true, false);
+        }, ms);
+      }
+      updateAutoSaveUI();
+    }
+
+    function updateAutoSaveUI() {
+      const badge = document.getElementById('autoSaveBadge');
+      const chk = document.getElementById('chkAutoSave');
+      if (chk) chk.checked = !!G.autoSaveEnabled;
+      if (badge) {
+        if (G.autoSaveEnabled) {
+          badge.textContent = `● 稼働中 (${G.autoSaveIntervalSec}秒ごと)`;
+          badge.style.color = '#00e676';
+          badge.style.background = 'rgba(0,230,118,0.12)';
+          badge.style.borderColor = 'rgba(0,230,118,0.3)';
+        } else {
+          badge.textContent = `× 停止中`;
+          badge.style.color = '#ff5252';
+          badge.style.background = 'rgba(255,82,82,0.12)';
+          badge.style.borderColor = 'rgba(255,82,82,0.3)';
+        }
+      }
+
+      document.querySelectorAll('.interval-btn').forEach(btn => {
+        const sec = parseInt(btn.getAttribute('data-sec'), 10);
+        btn.classList.toggle('active', sec === G.autoSaveIntervalSec);
+      });
+    }
+
+    setInterval(() => {
+      const el = document.getElementById('lastSaveAgoTxt');
+      if (!el) return;
+      const diffSec = Math.floor((Date.now() - lastSaveTimestamp) / 1000);
+      if (diffSec <= 1) {
+        el.textContent = 'たった今';
+      } else if (diffSec < 60) {
+        el.textContent = `${diffSec}秒前`;
+      } else {
+        el.textContent = `${Math.floor(diffSec / 60)}分${diffSec % 60}秒前`;
+      }
+    }, 1000);
+
+    const chkAutoSave = document.getElementById('chkAutoSave');
+    if (chkAutoSave) {
+      chkAutoSave.addEventListener('change', (e) => {
+        G.autoSaveEnabled = e.target.checked;
+        restartAutoSaveTimer();
+        saveGame(false);
+        showToast(G.autoSaveEnabled ? '💾 オートセーブを有効化しました' : '⚠️ オートセーブを停止しました');
+      });
+    }
+
+    document.querySelectorAll('.interval-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sec = parseInt(btn.getAttribute('data-sec'), 10);
+        G.autoSaveIntervalSec = sec;
+        restartAutoSaveTimer();
+        saveGame(false);
+        showToast(`⏱️ オートセーブ間隔を【${sec}秒】に設定しました`);
+      });
+    });
+
+    window.addEventListener('beforeunload', () => { if (!isResetting) saveGame(false); });
+    window.addEventListener('pagehide', () => { if (!isResetting) saveGame(false); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && !isResetting) saveGame(false);
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      saveGame(true, true);
+      showToast('💾 ゲームデータを手動保存しました！');
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      saveGame(false);
+      const code = btoa(unescape(encodeURIComponent(JSON.stringify(G))));
+      navigator.clipboard ? navigator.clipboard.writeText(code).then(() => showToast('📤 セーブコードをクリップボードにコピーしました！'))
+                           : prompt('以下のセーブコードをコピーしてください:', code);
+    });
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+      const code = prompt('セーブコードを貼り付けてください:');
+      if (!code) return;
+      try {
+        const decoded = decodeURIComponent(escape(atob(code.trim())));
+        const data = JSON.parse(decoded);
+        G = Object.assign(getDefaultState(), data);
+        saveGame(false);
+        location.reload();
+      } catch(e) {
+        alert('セーブコードの読み込みに失敗しました。無効なデータです。');
+      }
+    });
+
+    function resetGameToInitial() {
+      isResetting = true;
+
+      // 稼働中のタイマー類を全停止
+      clearInterval(autoSaveTimerId);
+      clearTimeout(moveTimeout);
+      clearTimeout(boostTimer);
+      clearTimeout(frenzyTimer);
+
+      // セーブデータを完全消去
+      localStorage.removeItem(SAVE_KEY);
+
+      // メモリ上のゲーム状態を初期状態へ戻す
+      G = getDefaultState();
+      isMoving = false;
+      isRight = false;
+      isBoosted = false;
+      isAuto = false;
+      isFrenzy = false;
+      springCharge = 0;
+      swingStartTime = 0;
+      lastDuration = 2.0;
+
+      // ページをリロードして完全な初期状態からゲームを再スタート
+      try {
+        location.reload();
+      } catch(e) {
+        // リロードがブロックされた場合でもその場で即座に1からスタート
+        rebuildMetroUnits();
+        renderFac();
+        renderAscendTree();
+        renderAchieves();
+        updateBulkButtonsUI();
+        updateBulkBarVisibility('tabMetro');
+
+        // 工房タブへ戻す
+        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        const tab0 = document.querySelector('.tab-item[data-tab="tabMetro"]');
+        if (tab0) tab0.classList.add('active');
+        const pane0 = document.getElementById('tabMetro');
+        if (pane0) pane0.classList.add('active');
+
+        timingBadge.innerHTML = '<span style="color: #667799; font-size: 0.85rem;">メトロノームをタップして刻め！端でPERFECT！</span>';
+        springBar.style.width = '0%';
+        goldenMetro.style.display = 'none';
+        rainbowLayer.classList.remove('active');
+        boostBtn.classList.remove('active');
+        boostBtn.disabled = true;
+        autoBtn.classList.remove('active', 'unlocked');
+        autoBtn.disabled = true;
+        autoBtn.textContent = '🔒 AUTO [未解放]';
+
+        isResetting = false;
+        restartAutoSaveTimer();
+        saveGame(false);
+        updateUI();
+        showToast('🔄 データを初期化し、ゲームを1からスタートしました！');
+      }
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm('本当にすべてのデータを完全に初期化しますか？\n（所持金・施設・守護龍・天界スキル・実績がすべてリセットされ、1からスタートします）')) {
+        if (confirm('本当によろしいですか？この操作は取り消せません！\n初期化してゲームを最初から開始します。')) {
+          resetGameToInitial();
+        }
+      }
+    });
+
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.className = 'toast-item';
+      t.textContent = msg;
+      toastContainer.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transition = 'opacity 0.3s';
+        setTimeout(() => t.remove(), 300);
+      }, 3000);
+    }
+
+    function showJackpotPopup(title, sub) {
+      const banner = document.getElementById('jackpotBanner');
+      banner.querySelector('div').textContent = title;
+      document.getElementById('jackpotTxt').textContent = sub;
+      banner.classList.add('show');
+      setTimeout(() => banner.classList.remove('show'), 1300);
+    }
+
+    function spawnFloatText(txt, x, y) {
+      const el = document.createElement('div');
+      el.className = 'pop-text';
+      el.textContent = txt;
+      el.style.left = `${x - 20}px`;
+      el.style.top = `${y - 20}px`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    function updateBulkBarVisibility(tabId) {
+      const bar = document.getElementById('bulkBuyBar');
+      if (!bar) return;
+      if (tabId === 'tabMetro' || tabId === 'tabFac') {
+        bar.style.display = 'flex';
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+
+    function updateBulkButtonsUI() {
+      document.querySelectorAll('.bulk-btn').forEach(b => {
+        const val = b.getAttribute('data-bulk');
+        const match = (val === 'max' && G.bulkBuyAmount === 'max') || (parseInt(val, 10) === G.bulkBuyAmount);
+        b.classList.toggle('active', match);
+      });
+    }
+
+    document.querySelectorAll('.bulk-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = btn.getAttribute('data-bulk');
+        G.bulkBuyAmount = (val === 'max') ? 'max' : parseInt(val, 10);
+        updateBulkButtonsUI();
+        playTickSound(true, 500);
+        updateUI();
+      });
+    });
+
+    document.querySelectorAll('.tab-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const targetTab = btn.getAttribute('data-tab');
+        document.getElementById(targetTab).classList.add('active');
+        updateBulkBarVisibility(targetTab);
+      });
+    });
+
+    loadGame();
+    checkOfflineEarnings();
+    muteBtn.textContent = G.soundMuted ? '🔇' : '🔊';
+
+    rebuildMetroUnits();
+    renderFac();
+    renderAscendTree();
+    renderAchieves();
+    updateBulkButtonsUI();
+    updateBulkBarVisibility('tabMetro');
+    restartAutoSaveTimer();
+    updateUI();
+  </script>
+</body>
+</html>
