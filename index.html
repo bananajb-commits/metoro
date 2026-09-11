@@ -67,6 +67,12 @@
       overflow: hidden;
       border-right: 2px solid var(--border-color);
       gap: 6px;
+      transition: flex 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), padding 0.2s ease;
+    }
+
+    .game-wrapper.shop-collapsed .stage-area {
+      flex: 1;
+      border-right: none;
     }
 
     .top-bar {
@@ -434,6 +440,160 @@
       backdrop-filter: blur(12px);
       z-index: 30;
       box-shadow: -5px 0 25px rgba(0,0,0,0.7);
+      transition: width 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.22s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-wrapper.shop-collapsed .shop-area {
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ショップヘッダーバー（開閉コントロール） */
+    .shop-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      background: #0e0e1a;
+      border-bottom: 1.5px solid var(--border-color);
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.15s ease;
+    }
+    .shop-header-bar:hover {
+      background: #151526;
+    }
+
+    .sheet-handle {
+      display: none;
+      width: 36px;
+      height: 4px;
+      background: #3f3f5c;
+      border-radius: 2px;
+      margin: 2px auto 6px;
+    }
+
+    .shop-header-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 900;
+      color: #ccddee;
+    }
+
+    .shop-collapse-btn {
+      background: #1c1c2e;
+      color: #99aacc;
+      border: 1px solid #363654;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .shop-collapse-btn:hover {
+      background: #25253d;
+      color: #fff;
+      border-color: var(--cyan);
+    }
+    .shop-collapse-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 閉じたときにステージ上に表示される再展開フローティングボタン */
+    .floating-shop-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 50;
+      background: linear-gradient(135deg, rgba(22, 22, 38, 0.95), rgba(35, 35, 60, 0.95));
+      border: 1.5px solid #00e5ff;
+      border-radius: 20px;
+      padding: 6px 14px;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0, 229, 255, 0.35);
+      display: none;
+      align-items: center;
+      gap: 6px;
+      animation: floatPulse 2.2s infinite alternate ease-in-out;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .floating-shop-btn:hover {
+      transform: scale(1.05);
+      border-color: #ffd700;
+      box-shadow: 0 4px 22px rgba(255, 215, 0, 0.55);
+    }
+    .floating-shop-btn:active {
+      transform: scale(0.96);
+    }
+    .game-wrapper.shop-collapsed .floating-shop-btn {
+      display: flex;
+    }
+    @keyframes floatPulse {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-3px); }
+    }
+
+    /* タブバー内の閉じるボタン */
+    .tab-close-btn {
+      background: #1a1622 !important;
+      color: #ff5252 !important;
+      border-bottom: 3px solid transparent !important;
+      font-size: 0.70rem !important;
+      padding: 10px 8px !important;
+      flex: 0 0 auto !important;
+      min-width: 58px !important;
+      opacity: 0.85;
+      transition: all 0.2s;
+    }
+    .tab-close-btn:hover {
+      opacity: 1;
+      background: rgba(255, 82, 82, 0.18) !important;
+      color: #ff8a80 !important;
+    }
+    .tab-close-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* タップ時のリップル波紋 */
+    .tap-ripple {
+      position: fixed;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(0.2);
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.4) 0%, rgba(0, 229, 255, 0) 75%);
+      border: 2px solid rgba(0, 229, 255, 0.8);
+      animation: rippleAnim 0.42s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+      z-index: 75;
+    }
+    .tap-ripple.perfect {
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.55) 0%, rgba(255, 0, 127, 0) 75%);
+      border: 2.5px solid #ffd700;
+      box-shadow: 0 0 16px #ffb300, 0 0 24px #ff007f;
+    }
+    @keyframes rippleAnim {
+      0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
     }
 
     .tab-nav {
@@ -781,49 +941,112 @@
       .game-wrapper {
         flex-direction: column;
       }
+
+      /* 通常展開時：ステージ44dvh、ショップ56dvh */
       .stage-area {
         flex: none;
         width: 100%;
-        height: 46dvh;
-        min-height: 250px;
-        max-height: 48dvh;
-        padding: 8px 10px 6px;
+        height: 44dvh;
+        min-height: 200px;
+        max-height: 46dvh;
+        padding: 6px 8px 4px;
         border-right: none;
         border-bottom: 2px solid var(--border-color);
         gap: 4px;
+        transition: height 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), min-height 0.28s;
       }
+
       .shop-area {
         flex: 1;
         width: 100%;
         max-width: 100%;
-        height: 54dvh;
+        height: 56dvh;
+        max-height: 56dvh;
         box-shadow: 0 -5px 25px rgba(0,0,0,0.7);
+        transition: height 0.28s cubic-bezier(0.2, 0.9, 0.3, 1), max-height 0.28s;
+        border-top: 2px solid #33334d;
       }
+
+      .sheet-handle {
+        display: block;
+      }
+
+      .shop-header-bar {
+        padding: 5px 10px;
+        background: #11111e;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+      }
+      .shop-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+
+      /* 折りたたみ時（ボトムシート格納状態）：
+         ショップは画面下部にわずか48pxのバー（タブ一覧）として残り、
+         ステージが画面の90%以上（calc(100dvh - 48px)）に広がる！ */
+      .game-wrapper.shop-collapsed .stage-area {
+        height: calc(100dvh - 48px) !important;
+        min-height: calc(100dvh - 48px) !important;
+        max-height: calc(100dvh - 48px) !important;
+        flex: 1 1 auto !important;
+        border-bottom: none;
+      }
+
+      .game-wrapper.shop-collapsed .shop-area {
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        flex: 0 0 48px !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        overflow: hidden !important;
+        border-top: 2px solid var(--cyan);
+        box-shadow: 0 -3px 15px rgba(0, 229, 255, 0.25);
+      }
+
+      .game-wrapper.shop-collapsed .shop-area .shop-header-bar {
+        display: none !important;
+      }
+
+      .game-wrapper.shop-collapsed .shop-area .bulk-buy-bar,
+      .game-wrapper.shop-collapsed .shop-area .tab-pane {
+        display: none !important;
+      }
+
+      /* スマホ縦画面ではフローティングボタンは不要（タブが常に下部にあり、ワンタップで開くため） */
+      .game-wrapper.shop-collapsed .floating-shop-btn {
+        display: none !important;
+      }
+
       .top-bar {
-        gap: 6px;
+        gap: 5px;
       }
       .money-container {
-        padding: 4px 10px;
-        border-radius: 10px;
+        padding: 4px 8px;
+        border-radius: 9px;
       }
       .money-text {
-        font-size: 1.45rem;
+        font-size: clamp(1.2rem, 5vw, 1.55rem);
       }
       .sub-stats {
-        font-size: 0.68rem;
-        gap: 4px 8px;
+        font-size: 0.65rem;
+        gap: 3px 6px;
         margin-top: 2px;
       }
       .top-actions {
-        gap: 4px;
+        gap: 3px;
       }
       .act-btn {
-        padding: 5px 8px;
-        font-size: 0.68rem;
+        padding: 4px 7px;
+        font-size: 0.66rem;
         border-radius: 6px;
       }
       .timing-badge {
-        font-size: 0.92rem;
+        font-size: 0.88rem;
         min-height: 22px;
       }
       .spring-container {
@@ -831,9 +1054,9 @@
         gap: 6px;
       }
       .spring-winder-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 1.1rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1.15rem;
       }
       .spring-gauge {
         width: 60px;
@@ -841,25 +1064,39 @@
       }
       .bulk-buy-bar {
         padding: 5px 8px;
-        gap: 4px;
+        gap: 6px;
       }
       .bulk-label {
         font-size: 0.68rem;
       }
+      .bulk-btn-group {
+        flex: 1;
+        display: flex;
+        gap: 3px;
+        justify-content: flex-end;
+      }
       .bulk-btn {
-        padding: 3px 7px;
+        flex: 1;
+        min-width: 34px;
+        text-align: center;
+        padding: 4px 2px;
         font-size: 0.66rem;
       }
+      .tab-nav {
+        scrollbar-width: none;
+      }
       .tab-item {
-        min-width: 56px;
-        padding: 8px 4px;
+        min-width: 50px;
+        padding: 8px 3px;
         font-size: 0.68rem;
+        flex: 1 0 auto;
       }
       .shop-card {
         padding: 6px 8px;
+        min-height: 50px;
       }
       .shop-icon {
-        font-size: 1.4rem;
+        font-size: 1.35rem;
         width: 28px;
       }
       .shop-name {
@@ -887,13 +1124,15 @@
       }
       .autosave-indicator {
         right: 10px;
-        top: 10px;
+        top: 8px;
         bottom: auto;
         font-size: 0.66rem;
-        padding: 3px 9px;
+        padding: 3px 8px;
       }
+      /* トースト通知をスマホでは上部へ配置（ショップカード操作を邪魔しない） */
       .toast-container {
-        bottom: 12px;
+        top: 68px;
+        bottom: auto;
         right: 10px;
         left: 10px;
         align-items: center;
@@ -901,7 +1140,7 @@
       .toast-item {
         font-size: 0.72rem;
         padding: 6px 10px;
-        max-width: 92%;
+        max-width: 94%;
         text-align: center;
       }
       .achieve-grid {
@@ -1032,17 +1271,40 @@
 
       <div class="golden-metro" id="goldenMetro"></div>
 
+      <!-- ショップ折りたたみ時にステージ上に表示される再展開ボタン -->
+      <button class="floating-shop-btn" id="btnOpenShopFloating" title="ショップを開く (T)">
+        <span>🛒</span>
+        <span>ショップ・強化</span>
+        <span style="font-size: 0.68rem; color: #00e5ff;">▲</span>
+      </button>
+
     </div>
 
     <!-- 右側：ショップ＆多機能パネル -->
-    <div class="shop-area">
-      <div class="tab-nav">
-        <button class="tab-item active" data-tab="tabMetro">⚙️ 工房</button>
-        <button class="tab-item" data-tab="tabFac">🎻 施設</button>
-        <button class="tab-item" data-tab="tabDragon">🐉 守護龍</button>
-        <button class="tab-item" data-tab="tabCasino">🎰 幸運</button>
-        <button class="tab-item" data-tab="tabAscend">🌌 昇天</button>
-        <button class="tab-item" data-tab="tabAchieve">🏆 実績/記録</button>
+    <div class="shop-area" id="shopArea">
+      <!-- 開閉操作バー＆ハンドル -->
+      <div class="shop-header-bar" id="shopHeaderBar">
+        <div class="sheet-handle"></div>
+        <div class="shop-header-row">
+          <div class="shop-header-title">
+            <span>🛒</span>
+            <span id="shopHeaderTitleTxt">アップグレード・施設</span>
+          </div>
+          <button class="shop-collapse-btn" id="btnCollapseShop" title="パネルを閉じる / 開く">
+            <span class="collapse-icon">▼</span>
+            <span class="collapse-text">閉じる</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="tab-nav" id="tabNav">
+        <button class="tab-item active" data-tab="tabMetro" title="工房強化">⚙️ 工房</button>
+        <button class="tab-item" data-tab="tabFac" title="共鳴施設">🎻 施設</button>
+        <button class="tab-item" data-tab="tabDragon" title="守護龍">🐉 守護龍</button>
+        <button class="tab-item" data-tab="tabCasino" title="幸運カジノ">🎰 幸運</button>
+        <button class="tab-item" data-tab="tabAscend" title="天界昇天">🌌 昇天</button>
+        <button class="tab-item" data-tab="tabAchieve" title="実績と設定">🏆 実績</button>
+        <button class="tab-item tab-close-btn" id="tabCloseBtn" title="タブを閉じる">✕ 閉じる</button>
       </div>
 
       <!-- 一括購入切り替えバー -->
@@ -1504,6 +1766,105 @@
       } catch(e) {}
     }
 
+    // --- 触覚フィードバック（ハプティクス） ---
+    function triggerHaptic(type = 'light') {
+      if (G.soundMuted || !navigator.vibrate) return;
+      try {
+        if (type === 'light') navigator.vibrate(8);
+        else if (type === 'perfect') navigator.vibrate([14, 30, 20]);
+        else if (type === 'jackpot') navigator.vibrate([35, 30, 35, 30, 80]);
+        else if (type === 'spring') navigator.vibrate(6);
+        else if (type === 'boost') navigator.vibrate([25, 25, 25, 25, 40]);
+      } catch(e) {}
+    }
+
+    // --- タップ波紋（リップルエフェクト） ---
+    function spawnTapRipple(x, y, isPerfect = false) {
+      const ripple = document.createElement('div');
+      ripple.className = `tap-ripple ${isPerfect ? 'perfect' : ''}`;
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      document.body.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 420);
+    }
+
+    // --- ショップ・アップグレードパネルの開閉制御 ---
+    let isShopCollapsed = false;
+    let activeTabId = 'tabMetro';
+
+    function setShopCollapsed(collapsed, force = false) {
+      if (isShopCollapsed === collapsed && !force) return;
+      isShopCollapsed = collapsed;
+      G.isShopCollapsed = isShopCollapsed;
+
+      const wrapper = document.querySelector('.game-wrapper');
+      const shopArea = document.getElementById('shopArea');
+      const collapseBtn = document.getElementById('btnCollapseShop');
+      const collapseTxt = collapseBtn ? collapseBtn.querySelector('.collapse-text') : null;
+      const collapseIcon = collapseBtn ? collapseBtn.querySelector('.collapse-icon') : null;
+
+      if (isShopCollapsed) {
+        wrapper.classList.add('shop-collapsed');
+        if (shopArea) shopArea.classList.add('collapsed');
+        if (collapseTxt) collapseTxt.textContent = '開く';
+        if (collapseIcon) collapseIcon.textContent = '▲';
+        document.querySelectorAll('.tab-item:not(.tab-close-btn)').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        const bar = document.getElementById('bulkBuyBar');
+        if (bar) bar.style.display = 'none';
+      } else {
+        wrapper.classList.remove('shop-collapsed');
+        if (shopArea) shopArea.classList.remove('collapsed');
+        if (collapseTxt) collapseTxt.textContent = '閉じる';
+        if (collapseIcon) collapseIcon.textContent = '▼';
+        document.querySelectorAll('.tab-item:not(.tab-close-btn)').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-tab') === activeTabId);
+        });
+        document.querySelectorAll('.tab-pane').forEach(p => {
+          p.classList.toggle('active', p.id === activeTabId);
+        });
+        updateBulkBarVisibility(activeTabId);
+      }
+
+      // メトロノームをダイナミックリサイズ
+      fitMetroGrid();
+      let frames = 0;
+      const animInterval = setInterval(() => {
+        fitMetroGrid();
+        frames++;
+        if (frames > 8) clearInterval(animInterval);
+      }, 35);
+      setTimeout(fitMetroGrid, 320);
+    }
+
+    function toggleShop() {
+      setShopCollapsed(!isShopCollapsed);
+      playTickSound(true, 450);
+      triggerHaptic('light');
+    }
+
+    function switchTab(tabId) {
+      // すでにそのタブが開いていてショップが展開中の場合 → タブを閉じる（折りたたむ）！
+      if (!isShopCollapsed && activeTabId === tabId) {
+        setShopCollapsed(true);
+        playTickSound(false, 300);
+        triggerHaptic('light');
+        return;
+      }
+
+      // 別のタブに切り替える、または閉じていた状態から開く
+      activeTabId = tabId;
+      setShopCollapsed(false);
+      playTickSound(true, 480);
+      triggerHaptic('light');
+
+      // スクロールしてアクティブタブが見えるようにする
+      const activeBtn = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+
     // --- 定数データ ---
     const MATERIALS = [
       { name: "木製", cost: 0, mult: 1.0 },
@@ -1642,6 +2003,7 @@
         autoSaveEnabled: true,
         autoSaveIntervalSec: 5,
         soundMuted: false,
+        isShopCollapsed: false,
         lastSaveTime: Date.now()
       };
       if (typeof FACILITIES !== 'undefined') {
@@ -2162,6 +2524,7 @@
 
           mult = basePerf * (1 + effC * comboRate);
           playPerfectChime();
+          triggerHaptic('perfect');
 
           timingBadge.innerHTML = `
             <span style="color:#00e5ff; font-weight:900;">🎯 PERFECT!! x${mult.toFixed(1)}</span>
@@ -2170,6 +2533,7 @@
         } else {
           G.currentCombo = 0;
           timingBadge.innerHTML = `<span style="color:#8899bb;">HIT (リズムずれ)</span>`;
+          triggerHaptic('light');
         }
       }
 
@@ -2191,6 +2555,7 @@
           G.money += jVal;
           G.totalEarned += jVal;
           playKyuinSound();
+          triggerHaptic('jackpot');
           showJackpotPopup('🎰 777 大当り!! 🎰', `+${fmt(jVal)} 円 GET!!`);
           if (G.boostUnlocked && !isBoosted && Math.random() < 0.35) {
             setTimeout(triggerBoost, 400);
@@ -2210,6 +2575,8 @@
 
       if (clientX && clientY) {
         spawnFloatText(`+${fmt(earn)}`, clientX, clientY);
+        const isPerfNow = (timingBadge.textContent.includes('PERFECT'));
+        spawnTapRipple(clientX, clientY, isPerfNow);
       }
 
       moneyTxt.classList.add('bump');
@@ -2226,6 +2593,7 @@
 
     function triggerDragonRoar() {
       playRoarSound();
+      triggerHaptic('jackpot');
       const stage = document.getElementById('stage');
       stage.style.animation = 'shakeStage 0.5s';
       setTimeout(() => stage.style.animation = '', 500);
@@ -2253,6 +2621,16 @@
         e.preventDefault();
         const rect = metroClickArea.getBoundingClientRect();
         executeSwing(false, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      } else if (e.code === 'KeyT' || e.code === 'KeyS' || e.code === 'Escape') {
+        e.preventDefault();
+        toggleShop();
+      } else if (e.code >= 'Digit1' && e.code <= 'Digit6') {
+        const tabKeys = ['tabMetro', 'tabFac', 'tabDragon', 'tabCasino', 'tabAscend', 'tabAchieve'];
+        const idx = parseInt(e.key, 10) - 1;
+        if (tabKeys[idx]) {
+          e.preventDefault();
+          switchTab(tabKeys[idx]);
+        }
       }
     });
 
@@ -2268,6 +2646,7 @@
       springCharge = Math.min(100, springCharge + add);
       springBar.style.width = `${springCharge}%`;
       playTickSound(true, 500);
+      triggerHaptic('spring');
     }
     springBtn.addEventListener('pointerdown', windSpring);
     springBtn.addEventListener('click', (e) => e.stopPropagation());
@@ -2503,6 +2882,7 @@
       boostBtn.textContent = '確変発動中!!';
       rainbowLayer.classList.add('active');
       playKyuinSound();
+      triggerHaptic('boost');
 
       const durationSec = 10 + G.boostDurationExt + (G.dragonLvl >= 3 ? 5 : 0);
 
@@ -2783,6 +3163,9 @@
             if (G.ascUpgrades[u.id] === undefined) G.ascUpgrades[u.id] = false;
           });
           if (!G.bulkBuyAmount) G.bulkBuyAmount = 1;
+          if (G.isShopCollapsed !== undefined) {
+            setShopCollapsed(!!G.isShopCollapsed, true);
+          }
         }
       } catch(e) {}
     }
@@ -2916,6 +3299,7 @@
         renderAchieves();
         updateBulkButtonsUI();
         updateBulkBarVisibility('tabMetro');
+        setShopCollapsed(false, true);
 
         document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -3009,16 +3393,51 @@
       });
     });
 
-    document.querySelectorAll('.tab-item').forEach(btn => {
+    // タブクリックイベント（同じタブ再クリックで閉じるトグル機能つき）
+    document.querySelectorAll('.tab-item:not(.tab-close-btn)').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
         const targetTab = btn.getAttribute('data-tab');
-        document.getElementById(targetTab).classList.add('active');
-        updateBulkBarVisibility(targetTab);
+        if (targetTab) switchTab(targetTab);
       });
     });
+
+    // タブバー内の「✕ 閉じる」ボタン
+    const tabCloseBtn = document.getElementById('tabCloseBtn');
+    if (tabCloseBtn) {
+      tabCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setShopCollapsed(true);
+        playTickSound(false, 300);
+      });
+    }
+
+    // ショップヘッダーの開閉トグルボタン
+    const btnCollapseShop = document.getElementById('btnCollapseShop');
+    if (btnCollapseShop) {
+      btnCollapseShop.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleShop();
+      });
+    }
+
+    // ショップヘッダーバー自体のクリック（スマホでバー全体をタップして開閉可能）
+    const shopHeaderBar = document.getElementById('shopHeaderBar');
+    if (shopHeaderBar) {
+      shopHeaderBar.addEventListener('click', (e) => {
+        if (e.target.closest('#btnCollapseShop')) return;
+        toggleShop();
+      });
+    }
+
+    // ステージ上に表示されるフローティング「🛒 ショップを開く」ボタン
+    const btnOpenShopFloating = document.getElementById('btnOpenShopFloating');
+    if (btnOpenShopFloating) {
+      btnOpenShopFloating.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setShopCollapsed(false);
+        playTickSound(true, 500);
+      });
+    }
 
     // --- 自動フィッティング用監視 ---
     if (window.ResizeObserver && metroGridContainer) {
