@@ -59,13 +59,14 @@
       flex: 1.25;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 10px 16px 12px;
       position: relative;
       background: radial-gradient(circle at 50% 50%, #151528 0%, #05050a 100%);
       overflow: hidden;
       border-right: 2px solid var(--border-color);
+      gap: 6px;
     }
 
     .top-bar {
@@ -75,6 +76,7 @@
       align-items: flex-start;
       z-index: 30;
       gap: 8px;
+      flex-shrink: 0;
     }
 
     .money-container {
@@ -173,63 +175,99 @@
     @keyframes pulseBtn { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
     @keyframes glowPurple { 0% { box-shadow: 0 0 8px #7c4dff; } 100% { box-shadow: 0 0 20px #00b0ff; } }
 
-    /* メトロノームグリッド */
-    .metro-grid-wrapper {
+    /* メトロノーム表示ステージ領域（確実に見切れないスケーラブル設計） */
+    .metro-stage-wrapper {
       flex: 1;
+      min-height: 0;
       width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       position: relative;
       cursor: pointer;
+      overflow: hidden;
+    }
+
+    .timing-badge {
+      font-size: 1.1rem;
+      font-weight: 900;
+      min-height: 28px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-shrink: 0;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .combo-pill {
+      background: linear-gradient(135deg, #ff007f, #ff9900);
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 900;
+      box-shadow: 0 0 10px rgba(255,0,127,0.5);
+      animation: popText 0.2s;
+    }
+    @keyframes popText { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+    /* メトロノームを収めるコンテナ（領域内完全フィット） */
+    .metro-grid-container {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 4px 6px;
     }
 
     .metro-grid {
       display: grid;
-      gap: 12px;
       justify-content: center;
       align-items: center;
+      justify-items: center;
       max-width: 100%;
-      max-height: 68vh;
-      transition: all 0.3s ease;
+      max-height: 100%;
+      pointer-events: none;
+      transition: gap 0.2s ease;
     }
 
-    .metro-grid.count-1 { grid-template-columns: 1fr; transform: scale(1.1); }
-    .metro-grid.count-2 { grid-template-columns: repeat(2, 1fr); transform: scale(0.95); gap: 16px; }
-    .metro-grid.count-3, .metro-grid.count-4 { grid-template-columns: repeat(2, 1fr); transform: scale(0.8); gap: 10px; }
-    .metro-grid.count-5, .metro-grid.count-6 { grid-template-columns: repeat(3, 1fr); transform: scale(0.68); gap: 8px; }
-    .metro-grid.count-7, .metro-grid.count-8 { grid-template-columns: repeat(4, 1fr); transform: scale(0.58); gap: 6px; }
-    .metro-grid.count-9, .metro-grid.count-10, .metro-grid.count-11, .metro-grid.count-12 { grid-template-columns: repeat(4, 1fr); transform: scale(0.48); gap: 5px; }
-    .metro-grid.count-13, .metro-grid.count-14, .metro-grid.count-15, .metro-grid.count-16 { grid-template-columns: repeat(4, 1fr); transform: scale(0.40); gap: 4px; }
-    .metro-grid.count-17, .metro-grid.count-18, .metro-grid.count-19, .metro-grid.count-20 { grid-template-columns: repeat(5, 1fr); transform: scale(0.35); gap: 3px; }
-
+    /* メトロノーム単体ユニット（CSS変数でサイズ完全追従＆下部見切れ完全防止） */
     .metronome-unit {
       position: relative;
-      width: 150px;
-      height: 220px;
+      width: var(--unit-w, 120px);
+      height: var(--unit-h, 174px);
       display: flex;
       justify-content: center;
-      filter: drop-shadow(0 6px 18px rgba(0,0,0,0.85));
+      align-items: flex-end;
+      filter: drop-shadow(0 4px 14px rgba(0,0,0,0.85));
       pointer-events: none;
+      flex-shrink: 0;
+      user-select: none;
     }
 
     .case {
       position: absolute;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       background: linear-gradient(180deg, #3e2723, #150a07);
-      clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
-      border-radius: 6px;
+      clip-path: polygon(24% 0%, 76% 0%, 100% 100%, 0% 100%);
+      border-radius: 4px;
       border-top: 3px solid #6d4c41;
-      box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+      box-shadow: inset 0 0 14px rgba(0,0,0,0.8);
     }
 
     .scale-plate {
       position: absolute;
-      top: 28px;
-      width: 60px;
-      height: 115px;
+      top: 13%;
+      width: 44%;
+      height: 52%;
       background: rgba(255, 248, 225, 0.04);
       border-left: 1px dashed rgba(255, 215, 0, 0.35);
       border-right: 1px dashed rgba(255, 215, 0, 0.35);
@@ -240,48 +278,53 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      width: 10px;
+      width: 8px;
       opacity: 0.15;
       transition: opacity 0.1s, background 0.1s;
     }
-    .target-left { left: -5px; border-left: 3px solid #00e5ff; }
-    .target-right { right: -5px; border-right: 3px solid #00e5ff; }
+    .target-left { left: -4px; border-left: 3px solid #00e5ff; }
+    .target-right { right: -4px; border-right: 3px solid #00e5ff; }
     .target-zone.active { opacity: 0.9; background: rgba(0, 229, 255, 0.25); }
 
     .rod {
       position: absolute;
-      bottom: 20px;
-      width: 5px;
-      height: 180px;
+      bottom: 9%;
+      width: max(3px, calc(var(--unit-w, 120px) * 0.035));
+      height: 82%;
       background: linear-gradient(90deg, #eceff1, #b0bec5);
       transform-origin: bottom center;
       transform: rotate(-22deg);
       transition: transform 2s ease-in-out;
       z-index: 10;
       border-radius: 3px;
+      left: calc(50% - max(1.5px, calc(var(--unit-w, 120px) * 0.0175)));
     }
 
     .rod.right { transform: rotate(22deg); }
 
     .weight {
       position: absolute;
-      top: 40px;
-      left: -11px;
-      width: 27px;
-      height: 22px;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: max(14px, calc(var(--unit-w, 120px) * 0.18));
+      height: max(11px, calc(var(--unit-h, 174px) * 0.10));
       background: linear-gradient(135deg, #ffd54f, #ff8f00);
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      border-radius: 3px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.6);
     }
 
     .pivot {
       position: absolute;
-      bottom: 12px;
-      width: 20px;
-      height: 20px;
+      bottom: 5.5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: max(12px, calc(var(--unit-w, 120px) * 0.14));
+      height: max(12px, calc(var(--unit-w, 120px) * 0.14));
       background: radial-gradient(circle, #ffe082, #ff8f00);
       border-radius: 50%;
       z-index: 12;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.6);
     }
 
     /* 材質スタイル */
@@ -302,41 +345,25 @@
     }
     @keyframes rainbowGlow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
 
-    .timing-badge {
-      font-size: 1.25rem;
-      font-weight: 900;
-      min-height: 30px;
-      margin-top: 6px;
-      text-align: center;
+    /* 手動ゼンマイブーストバー */
+    .stage-bottom-bar {
+      width: 100%;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: flex-start;
+      flex-shrink: 0;
+      z-index: 25;
+      padding-top: 2px;
     }
-
-    .combo-pill {
-      background: linear-gradient(135deg, #ff007f, #ff9900);
-      color: #fff;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 0.85rem;
-      font-weight: 900;
-      box-shadow: 0 0 10px rgba(255,0,127,0.5);
-      animation: popText 0.2s;
-    }
-    @keyframes popText { 0% { transform: scale(0.8); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
     .spring-container {
-      position: absolute;
-      bottom: 12px;
-      left: 16px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
       background: rgba(18, 18, 28, 0.88);
       border: 1px solid #444;
-      padding: 5px 12px;
+      padding: 4px 11px;
       border-radius: 10px;
-      z-index: 25;
     }
 
     .spring-winder-btn {
@@ -344,9 +371,9 @@
       color: #000;
       border: 2px solid #fff;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 1.3rem;
+      width: 36px;
+      height: 36px;
+      font-size: 1.2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -357,8 +384,8 @@
     .spring-winder-btn:active { transform: rotate(45deg) scale(0.92); }
 
     .spring-gauge {
-      width: 85px;
-      height: 10px;
+      width: 80px;
+      height: 9px;
       background: #111;
       border-radius: 5px;
       border: 1px solid #555;
@@ -749,7 +776,7 @@
       box-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
     }
 
-    /* タブレット・スマホ縦画面対応 (portrait または幅840px以下) */
+    /* タブレット・スマホ縦画面対応 */
     @media (max-width: 840px) and (orientation: portrait), (max-width: 600px) {
       .game-wrapper {
         flex-direction: column;
@@ -757,18 +784,19 @@
       .stage-area {
         flex: none;
         width: 100%;
-        height: 42dvh;
-        min-height: 240px;
-        max-height: 45dvh;
-        padding: 8px 10px;
+        height: 46dvh;
+        min-height: 250px;
+        max-height: 48dvh;
+        padding: 8px 10px 6px;
         border-right: none;
         border-bottom: 2px solid var(--border-color);
+        gap: 4px;
       }
       .shop-area {
         flex: 1;
         width: 100%;
         max-width: 100%;
-        height: 58dvh;
+        height: 54dvh;
         box-shadow: 0 -5px 25px rgba(0,0,0,0.7);
       }
       .top-bar {
@@ -795,20 +823,17 @@
         border-radius: 6px;
       }
       .timing-badge {
-        font-size: 0.95rem;
-        min-height: 24px;
-        margin-top: 2px;
+        font-size: 0.92rem;
+        min-height: 22px;
       }
       .spring-container {
-        bottom: 8px;
-        left: 8px;
         padding: 3px 8px;
         gap: 6px;
       }
       .spring-winder-btn {
-        width: 34px;
-        height: 34px;
-        font-size: 1.15rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1.1rem;
       }
       .spring-gauge {
         width: 60px;
@@ -890,19 +915,9 @@
       .achieve-card-icon {
         font-size: 1.2rem;
       }
-
-      /* スマホ縦画面でのメトロノームグリッド最適化スケール */
-      .metro-grid.count-1 { transform: scale(0.85); }
-      .metro-grid.count-2 { transform: scale(0.70); gap: 10px; }
-      .metro-grid.count-3, .metro-grid.count-4 { transform: scale(0.58); gap: 6px; }
-      .metro-grid.count-5, .metro-grid.count-6 { transform: scale(0.48); gap: 5px; }
-      .metro-grid.count-7, .metro-grid.count-8 { transform: scale(0.40); gap: 4px; }
-      .metro-grid.count-9, .metro-grid.count-10, .metro-grid.count-11, .metro-grid.count-12 { transform: scale(0.33); gap: 3px; }
-      .metro-grid.count-13, .metro-grid.count-14, .metro-grid.count-15, .metro-grid.count-16 { transform: scale(0.28); gap: 2px; }
-      .metro-grid.count-17, .metro-grid.count-18, .metro-grid.count-19, .metro-grid.count-20 { transform: scale(0.24); gap: 2px; }
     }
 
-    /* スマホ横画面対応 (landscape かつ画面高さが低い場合) */
+    /* スマホ横画面対応 */
     @media (max-height: 520px) and (orientation: landscape) {
       .game-wrapper {
         flex-direction: row;
@@ -913,6 +928,7 @@
         padding: 6px 10px;
         border-right: 2px solid var(--border-color);
         border-bottom: none;
+        gap: 4px;
       }
       .shop-area {
         flex: 0.9;
@@ -931,9 +947,11 @@
         padding: 4px 7px;
         font-size: 0.65rem;
       }
+      .timing-badge {
+        font-size: 0.85rem;
+        min-height: 20px;
+      }
       .spring-container {
-        bottom: 4px;
-        left: 6px;
         padding: 2px 6px;
       }
       .spring-winder-btn {
@@ -941,14 +959,6 @@
         height: 28px;
         font-size: 1rem;
       }
-      .metro-grid.count-1 { transform: scale(0.70); }
-      .metro-grid.count-2 { transform: scale(0.55); }
-      .metro-grid.count-3, .metro-grid.count-4 { transform: scale(0.45); }
-      .metro-grid.count-5, .metro-grid.count-6 { transform: scale(0.38); }
-      .metro-grid.count-7, .metro-grid.count-8 { transform: scale(0.32); }
-      .metro-grid.count-9, .metro-grid.count-10, .metro-grid.count-11, .metro-grid.count-12 { transform: scale(0.26); }
-      .metro-grid.count-13, .metro-grid.count-14, .metro-grid.count-15, .metro-grid.count-16 { transform: scale(0.22); }
-      .metro-grid.count-17, .metro-grid.count-18, .metro-grid.count-19, .metro-grid.count-20 { transform: scale(0.19); }
     }
 
     /* 超小型スマホ (幅360px以下) */
@@ -956,10 +966,8 @@
       .money-text { font-size: 1.25rem; }
       .sub-stats { font-size: 0.62rem; }
       .act-btn { padding: 4px 6px; font-size: 0.64rem; }
-      .metro-grid.count-1 { transform: scale(0.75); }
     }
 
-    /* スマホ向けタップ・テキスト調整 */
     html {
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
@@ -1001,18 +1009,24 @@
         </div>
       </div>
 
-      <div class="metro-grid-wrapper" id="metroClickArea">
-        <div class="metro-grid count-1" id="metroGrid"></div>
+      <!-- メトロノーム主演奏ステージ（確実に見切れないスケーラブル設計） -->
+      <div class="metro-stage-wrapper" id="metroClickArea">
         <div class="timing-badge" id="timingBadge">
           <span style="color: #667799; font-size: 0.85rem;">メトロノームをタップして刻め！端でPERFECT！</span>
         </div>
-      </div>
 
-      <div class="spring-container">
-        <button class="spring-winder-btn" id="springBtn" title="連打してゼンマイを巻く！">🌀</button>
-        <div>
-          <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 2px;">手動ゼンマイブースト</div>
-          <div class="spring-gauge"><div class="spring-fill" id="springBar"></div></div>
+        <div class="metro-grid-container" id="metroGridContainer">
+          <div class="metro-grid" id="metroGrid"></div>
+        </div>
+
+        <div class="stage-bottom-bar">
+          <div class="spring-container" id="springContainer">
+            <button class="spring-winder-btn" id="springBtn" title="連打してゼンマイを巻く！">🌀</button>
+            <div>
+              <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 2px;">手動ゼンマイブースト</div>
+              <div class="spring-gauge"><div class="spring-fill" id="springBar"></div></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1042,7 +1056,6 @@
           <button class="bulk-btn" data-bulk="max">MAX</button>
         </div>
       </div>
-
 
       <!-- タブ1：工房強化 -->
       <div class="tab-pane active" id="tabMetro">
@@ -1579,7 +1592,7 @@
       { id: "mat_9", name: "宇宙の真理", desc: "超弦理論の光糸を錬成", icon: "🔨", check: g => g.materialLvl >= 9 },
       { id: "dragon_1", name: "生命の鼓動", desc: "守護龍の卵を孵化させる", icon: "🐣", check: g => g.dragonLvl >= 1 },
       { id: "dragon_2", name: "大空の咆哮", desc: "疾風の音龍へ進化", icon: "🐲", check: g => g.dragonLvl >= 2 },
-      { id: "dragon_4", name: "終焉と原初の響龍", avatar: "🌌", check: g => g.dragonLvl >= 4 },
+      { id: "dragon_4", name: "終焉と原初の響龍", desc: "終焉と原初の響龍へ進化", icon: "🌌", check: g => g.dragonLvl >= 4 },
       { id: "casino_jackpot", name: "ラッキーフィーバー", desc: "スロットで大当りを出す", icon: "🎰", check: g => g.jackpots >= 1 },
       { id: "golden_1", name: "黄金の輝き", desc: "黄金メトロノームを捕獲", icon: "✦", check: g => g.goldenClicks >= 1 },
       { id: "ascend_1", name: "天界への昇天", desc: "初めて昇天（プレステージ）を行う", icon: "🌌", check: g => g.ascensions >= 1 },
@@ -1808,6 +1821,7 @@
     const unitsTxt = document.getElementById('unitsTxt');
     const cpsTxt = document.getElementById('cpsTxt');
     const metroGrid = document.getElementById('metroGrid');
+    const metroGridContainer = document.getElementById('metroGridContainer');
     const timingBadge = document.getElementById('timingBadge');
     const boostBtn = document.getElementById('boostBtn');
     const autoBtn = document.getElementById('autoBtn');
@@ -1817,6 +1831,50 @@
     const rainbowLayer = document.getElementById('rainbowLayer');
     const goldenMetro = document.getElementById('goldenMetro');
     const toastContainer = document.getElementById('toastContainer');
+
+    // --- メトロノーム動的レイアウト計算（見切れを根絶し完全自動フィット） ---
+    function fitMetroGrid() {
+      if (!metroGridContainer || !metroGrid) return;
+      const count = Math.max(1, G.unitCount || 1);
+
+      const availW = metroGridContainer.clientWidth - 12;
+      const availH = metroGridContainer.clientHeight - 8;
+      if (availW <= 0 || availH <= 0) return;
+
+      const aspect = 1.45; // 高さ / 幅
+      let bestW = 0;
+      let bestCols = 1;
+
+      // 画面幅に応じた最大列数
+      const maxCols = Math.min(count, availW < 380 ? 4 : (availW < 650 ? 5 : 6));
+
+      for (let c = 1; c <= maxCols; c++) {
+        const r = Math.ceil(count / c);
+        const gapX = (c - 1) * 8;
+        const gapY = (r - 1) * 8;
+
+        const maxWByWidth = (availW - gapX) / c;
+        const maxWByHeight = ((availH - gapY) / r) / aspect;
+
+        const w = Math.min(maxWByWidth, maxWByHeight);
+        if (w > bestW) {
+          bestW = w;
+          bestCols = c;
+        }
+      }
+
+      // 1台の時の上限と下限
+      const maxUnitW = availW < 450 ? 130 : 165;
+      const minUnitW = 32;
+      const unitW = Math.max(minUnitW, Math.min(maxUnitW, Math.floor(bestW)));
+      const unitH = Math.floor(unitW * aspect);
+      const gap = Math.max(4, Math.min(12, Math.floor(unitW * 0.08)));
+
+      metroGrid.style.gridTemplateColumns = `repeat(${bestCols}, ${unitW}px)`;
+      metroGrid.style.gap = `${gap}px`;
+      metroGrid.style.setProperty('--unit-w', `${unitW}px`);
+      metroGrid.style.setProperty('--unit-h', `${unitH}px`);
+    }
 
     function updateUI() {
       moneyTxt.textContent = `${fmt(G.money)} 円`;
@@ -2028,7 +2086,7 @@
 
     function rebuildMetroUnits() {
       metroGrid.innerHTML = '';
-      metroGrid.className = `metro-grid count-${G.unitCount} mat-${G.materialLvl}`;
+      metroGrid.className = `metro-grid mat-${G.materialLvl}`;
 
       for (let i = 0; i < G.unitCount; i++) {
         const unit = document.createElement('div');
@@ -2044,6 +2102,7 @@
         `;
         metroGrid.appendChild(unit);
       }
+      fitMetroGrid();
     }
 
     function executeSwing(isAutoTrigger = false, clientX = null, clientY = null) {
@@ -2183,6 +2242,8 @@
 
     const metroClickArea = document.getElementById('metroClickArea');
     metroClickArea.addEventListener('pointerdown', (e) => {
+      // ゼンマイコンテナ内部のクリックは除外
+      if (e.target.closest('#springContainer')) return;
       e.stopPropagation();
       executeSwing(false, e.clientX, e.clientY);
     });
@@ -2196,7 +2257,7 @@
     });
 
     const springBtn = document.getElementById('springBtn');
-    const springContainer = document.querySelector('.spring-container');
+    const springContainer = document.getElementById('springContainer');
     if (springContainer) {
       springContainer.addEventListener('pointerdown', (e) => e.stopPropagation());
     }
@@ -2829,16 +2890,13 @@
     function resetGameToInitial() {
       isResetting = true;
 
-      // 稼働中のタイマー類を全停止
       clearInterval(autoSaveTimerId);
       clearTimeout(moveTimeout);
       clearTimeout(boostTimer);
       clearTimeout(frenzyTimer);
 
-      // セーブデータを完全消去
       localStorage.removeItem(SAVE_KEY);
 
-      // メモリ上のゲーム状態を初期状態へ戻す
       G = getDefaultState();
       isMoving = false;
       isRight = false;
@@ -2849,11 +2907,9 @@
       swingStartTime = 0;
       lastDuration = 2.0;
 
-      // ページをリロードして完全な初期状態からゲームを再スタート
       try {
         location.reload();
       } catch(e) {
-        // リロードがブロックされた場合でもその場で即座に1からスタート
         rebuildMetroUnits();
         renderFac();
         renderAscendTree();
@@ -2861,7 +2917,6 @@
         updateBulkButtonsUI();
         updateBulkBarVisibility('tabMetro');
 
-        // 工房タブへ戻す
         document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
         const tab0 = document.querySelector('.tab-item[data-tab="tabMetro"]');
@@ -2964,6 +3019,16 @@
         updateBulkBarVisibility(targetTab);
       });
     });
+
+    // --- 自動フィッティング用監視 ---
+    if (window.ResizeObserver && metroGridContainer) {
+      const ro = new ResizeObserver(() => {
+        fitMetroGrid();
+      });
+      ro.observe(metroGridContainer);
+    }
+    window.addEventListener('resize', fitMetroGrid);
+    window.addEventListener('orientationchange', () => setTimeout(fitMetroGrid, 120));
 
     loadGame();
     checkOfflineEarnings();
